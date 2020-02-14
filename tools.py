@@ -2520,3 +2520,70 @@ def importer(path, data, mask_front, mask_back):
 def mpt_plot(mpt):
     mpt.EIS_plot()
 
+
+def guess(guess_package):
+    
+    #SINGLE ITERATION OF THE GUESS PROCESS
+    #USE THIS FUNCTION TO GET CLOSER TO THE IDEAL COEFFICIENTS FOR Rs, R, n, fs, R2, n2, fs2
+    #REPEAT THIS FUNCTION UNTIL THE THRESHOLD IS ACHEIVED
+    
+    params = Parameters()
+    
+    #adding to the parameters package to send to the fitting function
+    params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
+    params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
+    params.add('n', value=guess_package[2], min=.65, max=1.2)
+    params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
+    params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
+    params.add('n2', value=guess_package[5], min=.65, max=1.2)
+    params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
+    
+    #Call to the fitting function given by PyEIS
+    mpt_data.EIS_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
+    
+    #maybe take a look at the plots,may help for accuracy, don't really need it...
+    #mpt_data.EIS_plot(fitting = 'on')
+    
+    
+    #print out the values
+    print(mpt_data.fit_Rs)
+    print()
+    print(mpt_data.fit_R)
+    print(mpt_data.fit_n)
+    print(mpt_data.fit_fs)
+    print()
+    print(mpt_data.fit_R2)
+    print(mpt_data.fit_n2)
+    print(mpt_data.fit_fs2)
+    
+    #export the new guess package
+    guess_package =  ([mpt_data.fit_Rs[0],mpt_data.fit_R[0],mpt_data.fit_n[0],mpt_data.fit_fs[0],mpt_data.fit_R2[0],mpt_data.fit_n2[0],mpt_data.fit_fs2[0]])
+    return guess_package
+
+
+
+#THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
+#IF THIS DOESN'T RETURN TRUE, WE RUN THE GUESSER UNTIL IT DOES
+def thresh_verif(before, after):
+    try:
+        total = 0
+        for i in range(len(before)):
+            total += (before[i] - after[i])
+        print(total)    
+        return abs(total) <= 1e-10
+    except IndexError as e:
+        #IF LISTS AREN'T THE SAME LENGTH
+        print("Lists are not the same length")
+        return
+
+
+
+#ITERATIVE GUESSER
+def guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
+    guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
+    new_guess = guess(guess_package)
+    while not thresh_verif(guess_package, new_guess):
+        guess_package = new_guess
+        new_guess = guess(new_guess)
+        print(new_guess)
+    return new_guess
