@@ -3,7 +3,40 @@
 #HELPING TO FIT POINTS FROM A NYQUIST PLOT IN THE FORM OF A MPT FILE
 
 #IMPORT NESSECARY LIBRARIES
-#from PyEIS import *
+#Python dependencies
+from __future__ import division
+import pandas as pd
+import numpy as np
+from scipy.constants import codata
+from pylab import *
+from scipy.optimize import curve_fit
+import mpmath as mp
+from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
+#from scipy.optimize import leastsq
+pd.options.mode.chained_assignment = None
+
+#Plotting
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+import seaborn as sns
+import matplotlib.ticker as mtick
+mpl.rc('mathtext', fontset='stixsans', default='regular')
+mpl.rcParams.update({'axes.labelsize':22})
+mpl.rc('xtick', labelsize=16) 
+mpl.rc('ytick', labelsize=16)
+mpl.rc('legend',fontsize=14)
+
+from scipy.constants import codata
+F = codata.physical_constants['Faraday constant'][0]
+Rg = codata.physical_constants['molar gas constant'][0]
+
+### Importing PyEIS add-ons
+#from .PyEIS_Data_extraction import *
+#from .PyEIS_Lin_KK import *
+#from .PyEIS_Advanced_tools import *
+
+from utils.data_extraction import *
 
 
 class mpt_data:
@@ -74,7 +107,7 @@ class mpt_data:
         else:
             print('__init__ error (#2)')
 
-    def EIS_plot(self, bode='off', fitting='off', rr='off', nyq_xlim='none', nyq_ylim='none', legend='on', savefig='none'):
+    def mpt_plot(self, bode='off', fitting='off', rr='off', nyq_xlim='none', nyq_ylim='none', legend='on', savefig='none'):
         if bode=='off':
             fig = figure(dpi=120, facecolor='w', edgecolor='w')
             fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
@@ -186,7 +219,7 @@ class mpt_data:
                 if legend == 'on' or legend == 'potential':
                     ax1.legend(loc='best', fontsize=10, frameon=False)
 
-    def EIS_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
+    def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
         '''
         EIS_fit() fits experimental data to an equivalent circuit model using complex non-linear least-squares (CNLS) fitting procedure and allows for batch fitting.
         
