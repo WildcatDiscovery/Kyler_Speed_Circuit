@@ -108,14 +108,20 @@ class mpt_data:
         else:
             print('__init__ error (#2)')
 
-    def mpt_plot(self, bode='off', fitting='off', rr='off', nyq_xlim='none', nyq_ylim='none', legend='on', savefig='none'):
-
-        ### Colors
+    def mpt_plot(self, bode='off', fitting='off', rr='off', legend='on', savefig='none', width = 6.4, height = 4.8):
+        
+        #Figure Initialization
+        fig = figure(dpi=120, figsize = [width, height], facecolor='w', edgecolor='w')
+        fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
+        ax = fig.add_subplot(111, aspect='equal')
+        
+        
+        #Color initialization
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
         colors_real = sns.color_palette("Blues", n_colors=len(self.df)+2)
         colors_imag = sns.color_palette("Oranges", n_colors=len(self.df)+2)
 
-        ### Label functions
+        #Label functions
         self.label_re_1 = []
         self.label_im_1 = []
         self.label_cycleno = []
