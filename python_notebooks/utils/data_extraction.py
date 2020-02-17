@@ -21,12 +21,10 @@ def extract_mpt(path, EIS_name):
     Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
     '''
     EIS_init = pd.read_csv(path+EIS_name, sep='\t', nrows=1,header=0,names=['err'], encoding='latin1') #findes line that states skiplines
-#    EIS_test_header_names = pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:20])-1, encoding='latin1') #locates number of skiplines
     EIS_test_header_names = pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:-1])-1, encoding='latin1') #locates number of skiplines
     names_EIS = []
     for j in range(len(EIS_test_header_names.columns)):
         names_EIS.append(correct_text_EIS(EIS_test_header_names.columns[j])) #reads coloumn text
-#    return pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:20]), names=names_EIS, encoding='latin1')
     return pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:-1]), names=names_EIS, encoding='latin1')
 
 
@@ -94,8 +92,6 @@ def correct_text_EIS(text_header):
         return 're'
     elif text_header == '-Im(Z)/Ohm' or text_header == "Z''(b)":
         return 'im'
-#    elif text_header == "Z''(b)":
-#        return 'im_neg'
     elif text_header == '|Z|/Ohm':
         return 'Z_mag'
     elif text_header == 'Phase(Z)/deg':

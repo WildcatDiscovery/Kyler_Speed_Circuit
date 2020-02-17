@@ -109,23 +109,6 @@ class mpt_data:
             print('__init__ error (#2)')
 
     def mpt_plot(self, bode='off', fitting='off', rr='off', nyq_xlim='none', nyq_ylim='none', legend='on', savefig='none'):
-        if bode=='off':
-            fig = figure(dpi=120, facecolor='w', edgecolor='w')
-            fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
-            ax = fig.add_subplot(111, aspect='equal')
-
-        elif bode=='on' and rr=='off' or bode=='log' and rr=='off' or bode=='re' and rr=='off' or bode=='log_re' and rr=='off' or bode=='im' and rr=='off' or bode=='log_im' and rr=='off' or bode=='log' and rr=='off':
-            fig = figure(figsize=(6, 5), dpi=120, facecolor='w', edgecolor='w')
-            fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
-            ax = fig.add_subplot(211, aspect='equal')
-            ax1 = fig.add_subplot(212)
-
-        elif bode=='on' and rr=='on' or bode=='log' and rr=='on' or bode=='re' and rr=='on' or bode=='log_re' and rr=='on' or bode=='im' and rr=='on' or bode=='log_im' and rr=='on' or bode=='log' and rr=='on':
-            fig = figure(figsize=(6, 8), dpi=120, facecolor='w', edgecolor='k')
-            fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
-            ax = fig.add_subplot(311, aspect='equal')
-            ax1 = fig.add_subplot(312)
-            ax2 = fig.add_subplot(313)
 
         ### Colors
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
@@ -155,70 +138,7 @@ class mpt_data:
             if fitting == 'on':
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
 
-        ### Bode Plot
-        if bode=='on':
-            for i in range(len(self.df)):
-                ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i], marker='D', ms=3, lw=2.25, ls='-', label=self.label_re_1[i])
-                ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i], marker='s', ms=3, lw=2.25, ls='-', label=self.label_im_1[i])
-                if fitting == 'on':
-                    ax1.plot(np.log10(self.df[i].f), self.circuit_fit[i].real, lw=0, marker='D', ms=8, mec='r', mew=1, mfc='none', label='')
-                    ax1.plot(np.log10(self.df[i].f), -self.circuit_fit[i].imag, lw=0, marker='s', ms=8, mec='r', mew=1, mfc='none')
-                ax1.set_xlabel("log(f) [Hz]")
-                ax1.set_ylabel("Z', -Z'' [$\Omega$]")
-                if legend == 'on' or legend == 'potential': 
-                    ax1.legend(loc='best', fontsize=10, frameon=False)
-            
-        elif bode == 're':
-            for i in range(len(self.df)):
-                ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i], marker='D', ms=3, lw=2.25, ls='-', label=self.label_cycleno[i])
-                if fitting == 'on':
-                    ax1.plot(np.log10(self.df[i].f), self.circuit_fit[i].real, lw=0, marker='D', ms=8, mec='r', mew=1, mfc='none', label='')
-                ax1.set_xlabel("log(f) [Hz]")
-                ax1.set_ylabel("Z' [$\Omega$]")
-                if legend == 'on' or legend =='potential':
-                    ax1.legend(loc='best', fontsize=10, frameon=False)
-
-        elif bode == 'log_re':
-            for i in range(len(self.df)):
-                ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i], marker='D', ms=3, lw=2.25, ls='-', label=self.label_cycleno[i])
-                if fitting == 'on':
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.circuit_fit[i].real), lw=0, marker='D', ms=8, mec='r', mew=1, mfc='none', label='')
-                ax1.set_xlabel("log(f) [Hz]")
-                ax1.set_ylabel("log(Z') [$\Omega$]")
-                if legend == 'on' or legend == 'potential': 
-                    ax1.legend(loc='best', fontsize=10, frameon=False)
-
-        elif bode=='im':
-            for i in range(len(self.df)):
-                ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i], marker='s', ms=3, lw=2.25, ls='-', label=self.label_cycleno[i])
-                if fitting == 'on':
-                    ax1.plot(np.log10(self.df[i].f), -self.circuit_fit[i].imag, lw=0, marker='s', ms=8, mec='r', mew=1, mfc='none', label='')
-                ax1.set_xlabel("log(f) [Hz]")
-                ax1.set_ylabel("-Z'' [$\Omega$]")
-                if legend == 'on' or legend == 'potential':
-                    ax1.legend(loc='best', fontsize=10, frameon=False)
-
-        elif bode=='log_im':
-            for i in range(len(self.df)):
-                ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i], marker='s', ms=3, lw=2.25, ls='-', label=self.label_cycleno[i])
-                if fitting == 'on':
-                    ax1.plot(np.log10(self.df[i].f), np.log10(-self.circuit_fit[i].imag), lw=0, marker='s', ms=8, mec='r', mew=1, mfc='none', label='')
-                ax1.set_xlabel("log(f) [Hz]")
-                ax1.set_ylabel("log(-Z'') [$\Omega$]")
-                if legend == 'on' or legend == 'potential':
-                    ax1.legend(loc='best', fontsize=10, frameon=False)
-
-        elif bode == 'log':
-            for i in range(len(self.df)):
-                ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i], marker='D', ms=3, lw=2.25,  ls='-', label=self.label_re_1[i])
-                ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i], marker='s', ms=3, lw=2.25,  ls='-', label=self.label_im_1[i])
-                if fitting == 'on':
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.circuit_fit[i].real), lw=0, marker='D', ms=8, mec='r', mew=1, mfc='none', label='')
-                    ax1.plot(np.log10(self.df[i].f), np.log10(-self.circuit_fit[i].imag), lw=0, marker='s', ms=8, mec='r', mew=1, mfc='none')
-                ax1.set_xlabel("log(f) [Hz]")
-                ax1.set_ylabel("log(Z', -Z'') [$\Omega$]")
-                if legend == 'on' or legend == 'potential':
-                    ax1.legend(loc='best', fontsize=10, frameon=False)
+        
 
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
         '''
