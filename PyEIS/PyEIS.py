@@ -4025,6 +4025,7 @@ class EIS_exp:
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
+        print(self.df.__dict__.keys())
         for i in range(len(self.df)):
             self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
             print(report_fit(self.Fit[i]))

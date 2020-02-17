@@ -64,6 +64,7 @@ class mpt_data:
 
         # adds individual dataframes into one
         self.df_raw = [i for i in self.df_raw0][0]
+        self.df_raw = self.df_raw.assign(w = 2*np.pi*self.df_raw.f)
 
         #Masking data to each cycle
         self.df_pre = []
@@ -2665,6 +2666,101 @@ def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
         
     S = np.array(weight) * error #weighted sum of squares 
     return S
+
+def cir_RsRQRQ_fit(params, w):
+    '''
+    Fit Function: -Rs-RQ-RQ-
+    Return the impedance of an Rs-RQ circuit. See details under cir_RsRQRQ()
+    
+    Kristian B. Knudsen (kknu@berkeley.edu / kristianbknudsen@gmail.com)
+    '''
+    if str(params.keys())[10:].find("'R'") == -1: #if R == 'none':
+        Q = params['Q']
+        n = params['n']
+        fs = params['fs']
+        R = (1/(Q*(2*np.pi*fs)**n))
+    if str(params.keys())[10:].find("'Q'") == -1: #elif Q == 'none':
+        R = params['R']
+        n = params['n']
+        fs = params['fs']
+        Q = (1/(R*(2*np.pi*fs)**n))
+    if str(params.keys())[10:].find("'n'") == -1: #elif n == 'none':
+        R = params['R']
+        Q = params['Q']
+        fs = params['fs']
+        n = np.log(Q*R)/np.log(1/(2*np.pi*fs))
+    if str(params.keys())[10:].find("'fs'") == -1: #elif fs == 'none':
+        R = params['R']
+        Q = params['Q']
+        n = params['n']
+
+    if str(params.keys())[10:].find("'R2'") == -1: #if R == 'none':
+        Q2 = params['Q2']
+        n2 = params['n2']
+        fs2 = params['fs2']
+        R2 = (1/(Q2*(2*np.pi*fs2)**n2))
+    if str(params.keys())[10:].find("'Q2'") == -1: #elif Q == 'none':
+        R2 = params['R2']
+        n2 = params['n2']
+        fs2 = params['fs2']
+        Q2 = (1/(R2*(2*np.pi*fs2)**n2))
+    if str(params.keys())[10:].find("'n2'") == -1: #elif n == 'none':
+        R2 = params['R2']
+        Q2 = params['Q2']
+        fs2 = params['fs2']
+        n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
+    if str(params.keys())[10:].find("'fs2'") == -1: #elif fs == 'none':
+        R2 = params['R2']
+        Q2 = params['Q2']
+        n2 = params['n2']
+
+    Rs = params['Rs']
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+
+
+
+def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none'):
+    '''
+    Simulation Function: -Rs-RQ-RQ-
+    Return the impedance of an Rs-RQ circuit. See details for RQ under cir_RQ_fit()
+    
+    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+    
+    Inputs
+    ----------
+    w = Angular frequency [1/s]
+    Rs = Series Resistance [Ohm]
+    
+    R = Resistance [Ohm]
+    Q = Constant phase element [s^n/ohm]
+    n = Constant phase element exponent [-]
+    fs = Summit frequency of RQ circuit [Hz]
+
+    R2 = Resistance [Ohm]
+    Q2 = Constant phase element [s^n/ohm]
+    n2 = Constant phase element exponent [-]
+    fs2 = Summit frequency of RQ circuit [Hz]
+    '''
+    if R == 'none':
+        R = (1/(Q*(2*np.pi*fs)**n))
+    elif Q == 'none':
+        Q = (1/(R*(2*np.pi*fs)**n))
+    elif n == 'none':
+        n = np.log(Q*R)/np.log(1/(2*np.pi*fs))
+
+    if R2 == 'none':
+        R2 = (1/(Q2*(2*np.pi*fs2)**n2))
+    elif Q2 == 'none':
+        Q2 = (1/(R2*(2*np.pi*fs2)**n2))
+    elif n2 == 'none':
+        n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
+        
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+
+
+
+    
+
 
 
 
