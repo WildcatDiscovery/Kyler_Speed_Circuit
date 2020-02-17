@@ -2509,6 +2509,166 @@ class mpt_data:
 
 
 
+
+def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
+    '''
+    Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
+    until the total sum of errors is minimized.
+    
+    During the minimization the fit is weighed, and currently three different weigh options are avaliable:
+        - modulus
+        - unity
+        - proportional
+    
+    Modulus is generially recommended as random errors and a bias can exist in the experimental data.
+        
+    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+
+    Inputs
+    ------------
+    - params: parameters needed for CNLS
+    - re: real impedance
+    - im: Imaginary impedance
+    - circuit:
+      The avaliable circuits are shown below, and this this parameter needs it as a string.
+        - C
+        - Q
+        - R-C
+        - R-Q
+        - RC
+        - RQ
+        - R-RQ
+        - R-RQ-RQ
+        - R-RQ-Q
+        - R-(Q(RW))
+        - R-(Q(RM))
+        - R-RC-C
+        - R-RC-Q
+        - R-RQ-Q
+        - R-RQ-C
+        - RC-RC-ZD
+        - R-TLsQ
+        - R-RQ-TLsQ
+        - R-TLs
+        - R-RQ-TLs
+        - R-TLQ
+        - R-RQ-TLQ
+        - R-TL
+        - R-RQ-TL
+        - R-TL1Dsolid (reactive interface with 1D solid-state diffusion)
+        - R-RQ-TL1Dsolid
+
+    - weight_func
+      Weight function
+        - modulus
+        - unity
+        - proportional
+    '''
+    if circuit == 'C':
+        re_fit = elem_C_fit(params, w).real
+        im_fit = -elem_C_fit(params, w).imag
+    elif circuit == 'Q':
+        re_fit = elem_Q_fit(params, w).real
+        im_fit = -elem_Q_fit(params, w).imag
+    elif circuit == 'R-C':
+        re_fit = cir_RsC_fit(params, w).real
+        im_fit = -cir_RsC_fit(params, w).imag
+    elif circuit == 'R-Q':
+        re_fit = cir_RsQ_fit(params, w).real
+        im_fit = -cir_RsQ_fit(params, w).imag
+    elif circuit == 'RC':
+        re_fit = cir_RC_fit(params, w).real
+        im_fit = -cir_RC_fit(params, w).imag
+    elif circuit == 'RQ':
+        re_fit = cir_RQ_fit(params, w).real
+        im_fit = -cir_RQ_fit(params, w).imag
+    elif circuit == 'R-RQ':
+        re_fit = cir_RsRQ_fit(params, w).real
+        im_fit = -cir_RsRQ_fit(params, w).imag
+    elif circuit == 'R-RQ-RQ':
+        re_fit = cir_RsRQRQ_fit(params, w).real
+        im_fit = -cir_RsRQRQ_fit(params, w).imag
+    elif circuit == 'R-RC-C':
+        re_fit = cir_RsRCC_fit(params, w).real
+        im_fit = -cir_RsRCC_fit(params, w).imag
+    elif circuit == 'R-RC-Q':
+        re_fit = cir_RsRCQ_fit(params, w).real
+        im_fit = -cir_RsRCQ_fit(params, w).imag
+    elif circuit == 'R-RQ-Q':
+        re_fit = cir_RsRQQ_fit(params, w).real
+        im_fit = -cir_RsRQQ_fit(params, w).imag
+    elif circuit == 'R-RQ-C':
+        re_fit = cir_RsRQC_fit(params, w).real
+        im_fit = -cir_RsRQC_fit(params, w).imag
+    elif circuit == 'R-(Q(RW))':
+        re_fit = cir_Randles_simplified_Fit(params, w).real
+        im_fit = -cir_Randles_simplified_Fit(params, w).imag
+    elif circuit == 'R-(Q(RM))':
+        re_fit = cir_Randles_uelectrode_fit(params, w).real
+        im_fit = -cir_Randles_uelectrode_fit(params, w).imag
+    elif circuit == 'C-RC-C':
+        re_fit = cir_C_RC_C_fit(params, w).real
+        im_fit = -cir_C_RC_C_fit(params, w).imag
+    elif circuit == 'Q-RQ-Q':
+        re_fit = cir_Q_RQ_Q_Fit(params, w).real
+        im_fit = -cir_Q_RQ_Q_Fit(params, w).imag
+    elif circuit == 'RC-RC-ZD':
+        re_fit = cir_RCRCZD_fit(params, w).real
+        im_fit = -cir_RCRCZD_fit(params, w).imag
+    elif circuit == 'R-TLsQ':
+        re_fit = cir_RsTLsQ_fit(params, w).real
+        im_fit = -cir_RsTLsQ_fit(params, w).imag
+    elif circuit == 'R-RQ-TLsQ':
+        re_fit = cir_RsRQTLsQ_Fit(params, w).real
+        im_fit = -cir_RsRQTLsQ_Fit(params, w).imag
+    elif circuit == 'R-TLs':
+        re_fit = cir_RsTLs_Fit(params, w).real
+        im_fit = -cir_RsTLs_Fit(params, w).imag
+    elif circuit == 'R-RQ-TLs':
+        re_fit = cir_RsRQTLs_Fit(params, w).real
+        im_fit = -cir_RsRQTLs_Fit(params, w).imag
+    elif circuit == 'R-TLQ':
+        re_fit = cir_RsTLQ_fit(params, w).real
+        im_fit = -cir_RsTLQ_fit(params, w).imag
+    elif circuit == 'R-RQ-TLQ':
+        re_fit = cir_RsRQTLQ_fit(params, w).real
+        im_fit = -cir_RsRQTLQ_fit(params, w).imag
+    elif circuit == 'R-TL':
+        re_fit = cir_RsTL_Fit(params, w).real
+        im_fit = -cir_RsTL_Fit(params, w).imag
+    elif circuit == 'R-RQ-TL':
+        re_fit = cir_RsRQTL_fit(params, w).real
+        im_fit = -cir_RsRQTL_fit(params, w).imag
+    elif circuit == 'R-TL1Dsolid':
+        re_fit = cir_RsTL_1Dsolid_fit(params, w).real
+        im_fit = -cir_RsTL_1Dsolid_fit(params, w).imag
+    elif circuit == 'R-RQ-TL1Dsolid':
+        re_fit = cir_RsRQTL_1Dsolid_fit(params, w).real
+        im_fit = -cir_RsRQTL_1Dsolid_fit(params, w).imag
+    else:
+        print('Circuit is not defined in leastsq_errorfunc()')
+        
+    error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
+    
+    #Different Weighing options, see Lasia
+    if weight_func == 'modulus':
+        weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
+    elif weight_func == 'proportional':
+        weight = [1/(re_fit**2), 1/(im_fit**2)]
+    elif weight_func == 'unity':
+        unity_1s = []
+        for k in range(len(re)):
+            unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squres.
+        weight = [unity_1s, unity_1s]
+    else:
+        print('weight not defined in leastsq_errorfunc()')
+        
+    S = np.array(weight) * error #weighted sum of squares 
+    return S
+
+
+
+
 #IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
 #working on adjusting to mpt if not an mpt file to begin with
 def importer(path, data, mask_front, mask_back):
