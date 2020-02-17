@@ -2759,7 +2759,7 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
 
 
 
-    
+
 
 
 
@@ -2774,11 +2774,8 @@ def importer(path, data, mask_front, mask_back):
     return [mpt, df]
 
 
-def mpt_plot(mpt):
-    mpt.EIS_plot()
 
-
-def guess(guess_package):
+def guess(mpt_data, guess_package):
     
     #SINGLE ITERATION OF THE GUESS PROCESS
     #USE THIS FUNCTION TO GET CLOSER TO THE IDEAL COEFFICIENTS FOR Rs, R, n, fs, R2, n2, fs2
@@ -2796,7 +2793,7 @@ def guess(guess_package):
     params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
     
     #Call to the fitting function given by PyEIS
-    mpt_data.EIS_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
+    mpt_data.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
     
     #maybe take a look at the plots,may help for accuracy, don't really need it...
     #mpt_data.EIS_plot(fitting = 'on')
@@ -2836,11 +2833,11 @@ def thresh_verif(before, after):
 
 
 #ITERATIVE GUESSER
-def guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
+def guesser(mpt_data, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
     guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
-    new_guess = guess(guess_package)
+    new_guess = guess(mpt_data, guess_package)
     while not thresh_verif(guess_package, new_guess):
         guess_package = new_guess
-        new_guess = guess(new_guess)
+        new_guess = guess(mpt_data, new_guess)
         print(new_guess)
     return new_guess
