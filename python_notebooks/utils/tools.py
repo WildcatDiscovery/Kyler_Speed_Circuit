@@ -2672,10 +2672,10 @@ def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
 #IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
 #working on adjusting to mpt if not an mpt file to begin with
 def importer(path, data, mask_front, mask_back):
-    mpt_data = EIS_exp(path, data, mask = [mask_front, mask_back])
-    df = mpt_data.df_raw
-    mpt_data.EIS_plot()
-    return [mpt_data, df]
+    mpt = mpt_data(path, data, mask = [mask_front, mask_back])
+    df = mpt.df_raw
+    mpt.mpt_plot()
+    return [mpt, df]
 
 
 def mpt_plot(mpt):
