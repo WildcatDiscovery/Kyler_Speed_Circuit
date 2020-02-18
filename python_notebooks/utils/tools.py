@@ -39,6 +39,15 @@ Rg = codata.physical_constants['molar gas constant'][0]
 from utils.data_extraction import *
 
 
+#IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
+#working on adjusting to mpt if not an mpt file to begin with
+def importer(path, data, mask_front, mask_back, width = 6.4, height = 4.8):
+    mpt = mpt_data(path, data, mask = [mask_front, mask_back], gph_width = width, gph_height = height)
+    df = mpt.df_raw
+    mpt.mpt_plot()
+    return [mpt, df]
+
+
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
         self.width = gph_width
@@ -2743,23 +2752,3 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
         n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
         
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
-
-
-
-
-
-
-
-
-
-#IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
-#working on adjusting to mpt if not an mpt file to begin with
-def importer(path, data, mask_front, mask_back, width = 6.4, height = 4.8):
-    mpt = mpt_data(path, data, mask = [mask_front, mask_back], gph_width = width, gph_height = height)
-    df = mpt.df_raw
-    mpt.mpt_plot()
-    return [mpt, df]
-
-
-
-    
