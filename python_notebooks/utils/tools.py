@@ -31,12 +31,9 @@ from scipy.constants import codata
 F = codata.physical_constants['Faraday constant'][0]
 Rg = codata.physical_constants['molar gas constant'][0]
 
-### Importing PyEIS add-ons
-#from .PyEIS_Data_extraction import *
-#from .PyEIS_Lin_KK import *
-#from .PyEIS_Advanced_tools import *
 
 from utils.data_extraction import *
+from utils.lin_kk import *
 
 
 #IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
@@ -68,12 +65,7 @@ class mpt_data:
             if np.min(self.cycleno[j]) <= np.max(self.cycleno[j-1]):
                 if j > 0: #corrects cycle_number except for the first data file
                     self.df_raw0[j].update({'cycle_number': self.cycleno[j]+np.max(self.cycleno[j-1])}) #corrects cycle number
-#            else:
-#                print('__init__ Error (#1)')
 
-        #currently need to append a cycle_number coloumn to gamry files
-
-        # adds individual dataframes into one
         self.df_raw = [i for i in self.df_raw0][0]
         self.df_raw = self.df_raw.assign(w = 2*np.pi*self.df_raw.f)
 
@@ -2754,112 +2746,3 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
         
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
 
-def KK_Rnam_val(re, re_start, num_RC):
-    
-        num_RC = np.arange(1,num_RC+1,1)
-
-        R_name = []
-        R_initial = []
-        for j in range(len(num_RC)):
-            R_name.append('R'+str(num_RC[j]))
-            R_initial.append(1) #initial guess for Resistances
-
-        params = Parameters()
-        for j in range(len(num_RC)):
-            params.add(R_name[j], value=R_initial[j])
-
-        params.add('Rs', value=re[re_start], min=-10**5, max=10**5)
-        return params, R_name, num_RC
-
-def KK_timeconst(w, num_RC):
-    '''
-    This function determines the initial guesses for time constants for the Linear KK test
-    
-    Ref.:
-        - Schōnleber, M. et al. Electrochimica Acta 131 (2014) 20-27
-        
-    Kristian B. Knudsen (kknu@berkeley.edu || Kristianbknudsen@gmail.com)
-    '''
-    num_RC = np.arange(1,num_RC+1,1)
-
-    t_max = 1/min(w)
-    t_min = 1/max(w)
-    t_name = []
-    t_initial = []
-    for j in range(len(num_RC)):
-        t_name.append('t'+str(num_RC[j]))
-        t_initial.append(10**((np.log10(t_min)) + (j-1)/(len(num_RC)-1) * np.log10(t_max/t_min)) ) #initial guess parameter parameter tau for each -RC- circuit
-    return t_initial
-
-def KK_errorfunc_2(w, re, im, num_RC, t_values):
-   
-    if num_RC == 51:
-        re_fit = curve_fit(lambda w, Rs, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51: KK_RC51_fit(w, Rs, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51, t_values), w, re)[0]
-#        im_fit = curve_fit(lambda w, Rs, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51: KK_RC51_fit(w, Rs, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46, R47, R48, R49, R50, R51, t_values)[1], w, im)[0]
-    else:
-        print('error in this crap')
-    return re_fit#, im_fit
-
-def KK_errorfunc(params, w, re, im, num_RC, weight_func, t_values):
-    '''
-    Sum of squares error function for linear least-squares fitting for the Kramers-Kronig Relations. 
-    The fitting function will use this function to iterate over until the return the sum of errors is minimized
-    
-    The data should be minimized using the weight_func = 'Boukamp'
-    
-    Ref.: Boukamp, B.A. J. Electrochem. Soc., 142, 6, 1885-1894 
-    
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
-
-    Inputs
-    ------------
-        - w = angular frequency
-        - re = real impedance
-        - im = imaginary impedance
-        - num_RC = number of RC-circuits
-        - t_values = time constants
-        
-        weight_func = Weight function, Three options:
-            - modulus
-            - unity
-            - proportional
-            - Boukamp
-    '''
- 
-    
-    re_fit = KK_RC2_fit(params, w, t_values).real
-    im_fit = -KK_RC2_fit(params, w, t_values).imag
-    #print('In KK_errorfunc() - Define num_RC')
-    error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
-    
-    if weight_func == 'modulus':
-        weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
-    elif weight_func == 'proportional':
-        weight = [1/(re_fit**2), 1/(im_fit**2)]
-    elif weight_func == 'unity':
-        unity_1s = []
-        for k in range(len(re)):
-            unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squares.
-        weight = [unity_1s, unity_1s]
-    elif weight_func == 'Boukamp':
-        weight = [1/(re**2), 1/(im**2)]
-    elif weight_func == 'ignore':
-        print('weight ignored')
-    S = np.array(weight) * error #weighted sum of squares 
-    return S
-
-
-def KK_RC2_fit(params, w, t_values):
-    '''
-    Kramers-Kronig Function: -RC-
-    
-    Kristian B. Knudsen (kknu@berkeley.edu / kristianbknudsen@gmail.com)
-    '''
-    Rs = params['Rs']
-    R1 = params['R1']
-    R2 = params['R2']
-    return Rs + (R1/(1+w*1j*t_values[0])) + (R2 /(1+w*1j*t_values[1])) 
-
-
-
-    
