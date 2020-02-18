@@ -2434,6 +2434,43 @@ class mpt_data:
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
     
+    def KK_Rnam_val(re, re_start, num_RC):
+    '''
+    This function determines the name and initial guesses for resistances for the Linear KK test
+    
+    Ref.:
+        - Schōnleber, M. et al. Electrochimica Acta 131 (2014) 20-27
+        - Boukamp, B.A. J. Electrochem. Soc., 142, 6, 1885-1894 
+        
+    Kristian B. Knudsen (kknu@berkeley.edu || Kristianbknudsen@gmail.com)
+    
+    Inputs
+    -----------
+    w = angular frequency
+    num_RC = number of -(RC)- circuits
+    
+    Outputs
+    -----------
+    [0] = parameters for LMfit
+    [1] = R_names
+    [2] = number of R in each fit
+    '''
+    num_RC = np.arange(1,num_RC+1,1)
+
+    R_name = []
+    R_initial = []
+    for j in range(len(num_RC)):
+        R_name.append('R'+str(num_RC[j]))
+        R_initial.append(1) #initial guess for Resistances
+
+    params = Parameters()
+    for j in range(len(num_RC)):
+        params.add(R_name[j], value=R_initial[j])
+
+    params.add('Rs', value=re[re_start], min=-10**5, max=10**5)
+    return params, R_name, num_RC
+
+    
     def guess(self, guess_package):
         
         #SINGLE ITERATION OF THE GUESS PROCESS
