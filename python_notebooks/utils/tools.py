@@ -31,12 +31,9 @@ from scipy.constants import codata
 F = codata.physical_constants['Faraday constant'][0]
 Rg = codata.physical_constants['molar gas constant'][0]
 
-### Importing PyEIS add-ons
-#from .PyEIS_Data_extraction import *
-#from .PyEIS_Lin_KK import *
-#from .PyEIS_Advanced_tools import *
 
 from utils.data_extraction import *
+from utils.lin_kk import *
 
 
 #IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
@@ -69,7 +66,6 @@ class mpt_data:
                 if j > 0: #corrects cycle_number except for the first data file
                     self.df_raw0[j].update({'cycle_number': self.cycleno[j]+np.max(self.cycleno[j-1])}) #corrects cycle number
 
-        # adds individual dataframes into one
         self.df_raw = [i for i in self.df_raw0][0]
         self.df_raw = self.df_raw.assign(w = 2*np.pi*self.df_raw.f)
 
@@ -2440,7 +2436,7 @@ class mpt_data:
                     fig.savefig(savefig)
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
-    
+
     def guess(self, guess_package):
         
         #SINGLE ITERATION OF THE GUESS PROCESS
@@ -2480,8 +2476,6 @@ class mpt_data:
         guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
         return guess_package
 
-
-
     #THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
     #IF THIS DOESN'T RETURN TRUE, WE RUN THE GUESSER UNTIL IT DOES
     def thresh_verif(self, before, after):
@@ -2495,7 +2489,6 @@ class mpt_data:
             #IF LISTS AREN'T THE SAME LENGTH
             print("Lists are not the same length")
             return
-
 
 
     #ITERATIVE GUESSER
