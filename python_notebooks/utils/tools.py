@@ -2492,16 +2492,21 @@ class mpt_data:
 
 
     #ITERATIVE GUESSER
-    def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
+    #Note:Sometimes the graph just may not be able to get a perfect fit, so 
+    #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
+    def guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
         guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
-        new_guess = self.guess(guess_package)
-        while not self.thresh_verif(guess_package, new_guess):
+        new_guess = guess(guess_package)
+        counter = 0
+        while not thresh_verif(guess_package, new_guess):
             guess_package = new_guess
-            new_guess = self.guess(new_guess)
+            new_guess = guess(new_guess)
+            print("ITERATION NO: ", counter)
+            counter += 1
             print(new_guess)
-        self.mpt_plot(fitting = "on")
+            if counter == 5000:
+                return new_guess
         return new_guess
-
 def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
     '''
     Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
