@@ -130,7 +130,7 @@ class mpt_data:
 
 
 
-    def mpt_plot(self, bode='off', fitting='off', rr='off', legend='on', savefig='none'):
+    def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
         fig = figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
@@ -142,11 +142,10 @@ class mpt_data:
             ax.legend(loc='best', fontsize=10, frameon=False)
         ax.set_xlabel("Z' [$\Omega$]")
         ax.set_ylabel("-Z'' [$\Omega$]")
-
-        if nyq_xlim != 'none':
-            ax.set_xlim(nyq_xlim[0], nyq_xlim[1])
-        if nyq_ylim != 'none':
-            ax.set_ylim(nyq_ylim[0], nyq_ylim[1])
+        if x_window != 'none':
+            ax.set_xlim(x_window[0], x_window[1])
+        if y_window != 'none':
+            ax.set_ylim(y_window[0], y_window[1])
         
         #Color initialization
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
