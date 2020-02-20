@@ -135,7 +135,8 @@ class mpt_data:
         #Figure Initialization
         fig = figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
         fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
-        ax = fig.add_subplot(111, aspect='equal')
+        ax = fig.add_subplot(211, aspect='equal')
+        ax2 = fig.add_subplot(212)
         
         ### Figure specifics
         if legend == 'on': 
@@ -166,6 +167,56 @@ class mpt_data:
                 self.label_re_1.append("Z' ("+str(np.round(np.average(self.df[i].E_avg), 2))+' V)')
                 self.label_im_1.append("Z'' ("+str(np.round(np.average(self.df[i].E_avg), 2))+' V)')
                 self.label_cycleno.append(str(np.round(np.average(self.df[i].E_avg), 2))+' V')
+
+        ### Relative Residuals on Fit
+        if rr=='on':
+            if fitting == 'off':
+                print('Fitting has not been performed, thus the relative residuals cannot be determined')
+            elif fitting == 'on':
+                self.rr_real = []
+                self.rr_imag = []
+                for i in range(len(self.df)):
+                    self.rr_real.append(residual_real(re=self.df[i].re.values, fit_re=self.circuit_fit[i].real, fit_im=-self.circuit_fit[i].imag))
+                    self.rr_imag.append(residual_imag(im=self.df[i].im.values, fit_re=self.circuit_fit[i].real, fit_im=-self.circuit_fit[i].imag))
+                    if legend == 'on':
+                        ax2.plot(np.log10(self.df[i].f), self.rr_real[i]*100, color=colors_real[i], marker='D', ms=6, lw=1, ls='--', label='#'+str(i+1))
+                        ax2.plot(np.log10(self.df[i].f), self.rr_imag[i]*100, color=colors_imag[i], marker='s', ms=6, lw=1, ls='--',label='')
+                    elif legend == 'potential':
+                        ax2.plot(np.log10(self.df[i].f), self.rr_real[i]*100, color=colors_real[i], marker='D', ms=6, lw=1, ls='--', label=str(np.round(np.average(self.df[i].E_avg.values),2))+' V')
+                        ax2.plot(np.log10(self.df[i].f), self.rr_imag[i]*100, color=colors_imag[i], marker='s', ms=6, lw=1, ls='--',label='')
+
+                    ax2.axhline(0, ls='--', c='k', alpha=.5)
+                    ax2.set_xlabel("log(f) [Hz]")
+                    ax2.set_ylabel("$\Delta$Z', $\Delta$-Z'' [%]")
+
+                #Automatic y-limits limits
+                self.rr_im_min = []
+                self.rr_im_max = []
+                self.rr_re_min = []
+                for i in range(len(self.df)): # needs to be within a loop if cycles have different number of data points     
+                    self.rr_im_min = np.min(self.rr_imag[i])
+                    self.rr_im_max = np.max(self.rr_imag[i])
+                    self.rr_re_min = np.min(self.rr_real[i])
+                    self.rr_re_max = np.max(self.rr_real[i])
+                if self.rr_re_max > self.rr_im_max:
+                    self.rr_ymax = self.rr_re_max
+                else:
+                    self.rr_ymax = self.rr_im_max
+                if self.rr_re_min < self.rr_im_min:
+                    self.rr_ymin = self.rr_re_min
+                else:
+                    self.rr_ymin  = self.rr_im_min
+                if np.abs(self.rr_ymin) > np.abs(self.rr_ymax):
+                    ax2.set_ylim(self.rr_ymin *100*1.5, np.abs(self.rr_ymin)*100*1.5)
+                    ax2.annotate("$\Delta$Z'", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymin )*100*1.2), color=colors_real[-1], fontsize=12)
+                    ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymin )*100*0.9), color=colors_imag[-1], fontsize=12)
+                elif np.abs(self.rr_ymin) < np.abs(self.rr_ymax):
+                    ax2.set_ylim(np.negative(self.rr_ymax)*100*1.5, np.abs(self.rr_ymax)*100*1.5)                    
+                    ax2.annotate("$\Delta$Z'", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*1.2), color=colors_real[-1], fontsize=12)
+                    ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*0.9), color=colors_imag[-1], fontsize=12)
+    
+                if legend == 'on' or legend == 'potential':
+                    ax2.legend(loc='best', fontsize=10, frameon=False)
 
 
 
