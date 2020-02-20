@@ -110,6 +110,25 @@ class mpt_data:
                 self.df.append(self.df_limited[self.df_limited2.cycle_number == self.df_raw.cycle_number.unique()[i]])
         else:
             print('__init__ error (#2)')
+    
+    #DEFINE NEW DIMENSIONS
+    def set_gph_width(self, new_width):
+        self.width = new_width
+        return
+    
+    def set_gph_height(self, new_height):
+        self.height = new_height
+        return
+
+    def set_new_gph_dims(self, new_width, new_height):
+        set_gph_width(new_width)
+        set_gph_height(height)
+        return
+
+
+
+
+
 
     def mpt_plot(self, bode='off', fitting='off', rr='off', legend='on', savefig='none'):
         
