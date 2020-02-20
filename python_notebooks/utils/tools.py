@@ -38,8 +38,8 @@ from utils.lin_kk import *
 
 #IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
 #working on adjusting to mpt if not an mpt file to begin with
-def importer(path, data, mask_front, mask_back):
-    mpt = mpt_data(path, data, mask = [mask_front, mask_back])
+def importer(path, data, mask_front, mask_back, width, height):
+    mpt = mpt_data(path, data, mask = [10**mask_front, 10**mask_back], gph_width = width, gph_height = height)
     df = mpt.df_raw
     mpt.mpt_plot()
     return [mpt, df]
