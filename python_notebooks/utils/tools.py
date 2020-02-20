@@ -169,52 +169,8 @@ class mpt_data:
         
 
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
-        '''
-        EIS_fit() fits experimental data to an equivalent circuit model using complex non-linear least-squares (CNLS) fitting procedure and allows for batch fitting.
-        
-        Kristian B. Knudsen (kknu@berkeley.edu / kristianbknudsen@gmail.com)
-        
-        Inputs
-        ------------
-        - circuit:
-          Choose an equivalent circuits and defined circuit as a string. The following circuits are avaliable.
-            - RC
-            - RQ
-            - R-RQ
-            - R-RQ-RQ
-            - R-Q
-            - R-RQ-Q
-            - R-(Q(RW))
-            - C-RC-C
-            - Q-RQ-Q
-            - RC-RC-ZD
-            - R-TLsQ
-            - R-RQ-TLsQ
-            - R-TLs
-            - R-RQ-TLs
-            - R-TLQ
-            - R-RQ-TLQ
-            - R-TL
-            - R-RQ-TL
-            - R-TL1Dsolid (reactive interface with 1D solid-state diffusion)
-            - R-RQ-TL1Dsolid
-
-        - weight_func
-          The weight function to which the CNLS fitting is performed
-            - modulus (default)
-            - unity
-            - proportional
-        
-        - nan_policy
-        How to handle Nan or missing values in dataset
-            - ‘raise’ = raise a value error (default)
-            - ‘propagate’ = do nothing
-            - ‘omit’ = drops missing data
-        
-        Returns
-        ------------
-        Returns the fitted impedance spectra(s) but also the fitted parameters that were used in the initial guesses. To call these use e.g. self.fit_Rs
-        '''
+        #Fitting Function derived from the PyEIS fitting function
+        #Fits Kyler's Circuit, but a dev version uses the R - RQ - RQ circuit
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
@@ -1967,143 +1923,11 @@ class mpt_data:
         return new_guess
 
 def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
-    '''
-    Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
-    until the total sum of errors is minimized.
     
-    During the minimization the fit is weighed, and currently three different weigh options are avaliable:
-        - modulus
-        - unity
-        - proportional
-    
-    Modulus is generially recommended as random errors and a bias can exist in the experimental data.
-        
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
-
-    Inputs
-    ------------
-    - params: parameters needed for CNLS
-    - re: real impedance
-    - im: Imaginary impedance
-    - circuit:
-      The avaliable circuits are shown below, and this this parameter needs it as a string.
-        - C
-        - Q
-        - R-C
-        - R-Q
-        - RC
-        - RQ
-        - R-RQ
-        - R-RQ-RQ
-        - R-RQ-Q
-        - R-(Q(RW))
-        - R-(Q(RM))
-        - R-RC-C
-        - R-RC-Q
-        - R-RQ-Q
-        - R-RQ-C
-        - RC-RC-ZD
-        - R-TLsQ
-        - R-RQ-TLsQ
-        - R-TLs
-        - R-RQ-TLs
-        - R-TLQ
-        - R-RQ-TLQ
-        - R-TL
-        - R-RQ-TL
-        - R-TL1Dsolid (reactive interface with 1D solid-state diffusion)
-        - R-RQ-TL1Dsolid
-
-    - weight_func
-      Weight function
-        - modulus
-        - unity
-        - proportional
-    '''
-    if circuit == 'C':
-        re_fit = elem_C_fit(params, w).real
-        im_fit = -elem_C_fit(params, w).imag
-    elif circuit == 'Q':
-        re_fit = elem_Q_fit(params, w).real
-        im_fit = -elem_Q_fit(params, w).imag
-    elif circuit == 'R-C':
-        re_fit = cir_RsC_fit(params, w).real
-        im_fit = -cir_RsC_fit(params, w).imag
-    elif circuit == 'R-Q':
-        re_fit = cir_RsQ_fit(params, w).real
-        im_fit = -cir_RsQ_fit(params, w).imag
-    elif circuit == 'RC':
-        re_fit = cir_RC_fit(params, w).real
-        im_fit = -cir_RC_fit(params, w).imag
-    elif circuit == 'RQ':
-        re_fit = cir_RQ_fit(params, w).real
-        im_fit = -cir_RQ_fit(params, w).imag
-    elif circuit == 'R-RQ':
-        re_fit = cir_RsRQ_fit(params, w).real
-        im_fit = -cir_RsRQ_fit(params, w).imag
-    elif circuit == 'R-RQ-RQ':
-        re_fit = cir_RsRQRQ_fit(params, w).real
-        im_fit = -cir_RsRQRQ_fit(params, w).imag
-    elif circuit == 'R-RC-C':
-        re_fit = cir_RsRCC_fit(params, w).real
-        im_fit = -cir_RsRCC_fit(params, w).imag
-    elif circuit == 'R-RC-Q':
-        re_fit = cir_RsRCQ_fit(params, w).real
-        im_fit = -cir_RsRCQ_fit(params, w).imag
-    elif circuit == 'R-RQ-Q':
-        re_fit = cir_RsRQQ_fit(params, w).real
-        im_fit = -cir_RsRQQ_fit(params, w).imag
-    elif circuit == 'R-RQ-C':
-        re_fit = cir_RsRQC_fit(params, w).real
-        im_fit = -cir_RsRQC_fit(params, w).imag
-    elif circuit == 'R-(Q(RW))':
-        re_fit = cir_Randles_simplified_Fit(params, w).real
-        im_fit = -cir_Randles_simplified_Fit(params, w).imag
-    elif circuit == 'R-(Q(RM))':
-        re_fit = cir_Randles_uelectrode_fit(params, w).real
-        im_fit = -cir_Randles_uelectrode_fit(params, w).imag
-    elif circuit == 'C-RC-C':
-        re_fit = cir_C_RC_C_fit(params, w).real
-        im_fit = -cir_C_RC_C_fit(params, w).imag
-    elif circuit == 'Q-RQ-Q':
-        re_fit = cir_Q_RQ_Q_Fit(params, w).real
-        im_fit = -cir_Q_RQ_Q_Fit(params, w).imag
-    elif circuit == 'RC-RC-ZD':
-        re_fit = cir_RCRCZD_fit(params, w).real
-        im_fit = -cir_RCRCZD_fit(params, w).imag
-    elif circuit == 'R-TLsQ':
-        re_fit = cir_RsTLsQ_fit(params, w).real
-        im_fit = -cir_RsTLsQ_fit(params, w).imag
-    elif circuit == 'R-RQ-TLsQ':
-        re_fit = cir_RsRQTLsQ_Fit(params, w).real
-        im_fit = -cir_RsRQTLsQ_Fit(params, w).imag
-    elif circuit == 'R-TLs':
-        re_fit = cir_RsTLs_Fit(params, w).real
-        im_fit = -cir_RsTLs_Fit(params, w).imag
-    elif circuit == 'R-RQ-TLs':
-        re_fit = cir_RsRQTLs_Fit(params, w).real
-        im_fit = -cir_RsRQTLs_Fit(params, w).imag
-    elif circuit == 'R-TLQ':
-        re_fit = cir_RsTLQ_fit(params, w).real
-        im_fit = -cir_RsTLQ_fit(params, w).imag
-    elif circuit == 'R-RQ-TLQ':
-        re_fit = cir_RsRQTLQ_fit(params, w).real
-        im_fit = -cir_RsRQTLQ_fit(params, w).imag
-    elif circuit == 'R-TL':
-        re_fit = cir_RsTL_Fit(params, w).real
-        im_fit = -cir_RsTL_Fit(params, w).imag
-    elif circuit == 'R-RQ-TL':
-        re_fit = cir_RsRQTL_fit(params, w).real
-        im_fit = -cir_RsRQTL_fit(params, w).imag
-    elif circuit == 'R-TL1Dsolid':
-        re_fit = cir_RsTL_1Dsolid_fit(params, w).real
-        im_fit = -cir_RsTL_1Dsolid_fit(params, w).imag
-    elif circuit == 'R-RQ-TL1Dsolid':
-        re_fit = cir_RsRQTL_1Dsolid_fit(params, w).real
-        im_fit = -cir_RsRQTL_1Dsolid_fit(params, w).imag
-    else:
-        print('Circuit is not defined in leastsq_errorfunc()')
-        
+    #Least Squared Error Function for our R RQ RQ circuit
+    #ADJUST IN ACCORDANCE OF THE NEW CIRCUIT!!!!
+    re_fit = cir_RsRQRQ_fit(params, w).real
+    im_fit = -cir_RsRQRQ_fit(params, w).imag
     error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
     
     #Different Weighing options, see Lasia
@@ -2172,6 +1996,8 @@ def cir_RsRQRQ_fit(params, w):
     Rs = params['Rs']
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
 
+
+#TAKEN FROM PyEIS Library
 def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none'):
     '''
     Simulation Function: -Rs-RQ-RQ-
