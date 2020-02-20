@@ -137,6 +137,16 @@ class mpt_data:
         fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
         ax = fig.add_subplot(111, aspect='equal')
         
+        ### Figure specifics
+        if legend == 'on': 
+            ax.legend(loc='best', fontsize=10, frameon=False)
+        ax.set_xlabel("Z' [$\Omega$]")
+        ax.set_ylabel("-Z'' [$\Omega$]")
+
+        if nyq_xlim != 'none':
+            ax.set_xlim(nyq_xlim[0], nyq_xlim[1])
+        if nyq_ylim != 'none':
+            ax.set_ylim(nyq_ylim[0], nyq_ylim[1])
         
         #Color initialization
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
