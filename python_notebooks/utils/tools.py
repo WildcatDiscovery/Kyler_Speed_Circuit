@@ -222,31 +222,31 @@ class mpt_data:
             self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
             print(report_fit(self.Fit[i]))
             self.fit_E.append(np.average(self.df[i].E_avg))
-        if circuit == 'R-RQ-RQ':
-            self.fit_Rs = []
-            self.fit_R = []
-            self.fit_n = []
-            self.fit_R2 = []
-            self.fit_n2 = []
-            self.fit_fs = []
-            self.fit_fs2 = []
-            self.fit_Q = []
-            self.fit_Q2 = []
-            for i in range(len(self.df)):
-                if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()):
-                    self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value))
-                    self.fit_Rs.append(self.Fit[i].params.get('Rs').value)
-                    self.fit_R.append(self.Fit[i].params.get('R').value)
-                    self.fit_n.append(self.Fit[i].params.get('n').value)
-                    self.fit_fs.append(self.Fit[i].params.get('fs').value)
-                    self.fit_R2.append(self.Fit[i].params.get('R2').value)
-                    self.fit_n2.append(self.Fit[i].params.get('n2').value)
-                    self.fit_fs2.append(self.Fit[i].params.get('fs2').value)
-                    self.fit_Q.append(1/(self.fit_R[0] * (self.fit_fs[0] * 2 * np.pi)**self.fit_n[0])) 
-                    self.fit_Q2.append(1/(self.fit_R2[0] * (self.fit_fs2[0] * 2 * np.pi)**self.fit_n2[0])) 
-                else:
-                    print("Circuit Error, check inputs")
-                    break
+        assert circuit == 'R-RQ-RQ'
+        self.fit_Rs = []
+        self.fit_R = []
+        self.fit_n = []
+        self.fit_R2 = []
+        self.fit_n2 = []
+        self.fit_fs = []
+        self.fit_fs2 = []
+        self.fit_Q = []
+        self.fit_Q2 = []
+        for i in range(len(self.df)):
+            if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()):
+                self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value))
+                self.fit_Rs.append(self.Fit[i].params.get('Rs').value)
+                self.fit_R.append(self.Fit[i].params.get('R').value)
+                self.fit_n.append(self.Fit[i].params.get('n').value)
+                self.fit_fs.append(self.Fit[i].params.get('fs').value)
+                self.fit_R2.append(self.Fit[i].params.get('R2').value)
+                self.fit_n2.append(self.Fit[i].params.get('n2').value)
+                self.fit_fs2.append(self.Fit[i].params.get('fs2').value)
+                self.fit_Q.append(1/(self.fit_R[0] * (self.fit_fs[0] * 2 * np.pi)**self.fit_n[0])) 
+                self.fit_Q2.append(1/(self.fit_R2[0] * (self.fit_fs2[0] * 2 * np.pi)**self.fit_n2[0])) 
+            else:
+                print("Circuit Error, check inputs")
+                break
         
 
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
