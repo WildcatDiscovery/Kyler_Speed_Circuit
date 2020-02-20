@@ -130,13 +130,23 @@ class mpt_data:
 
 
 
-    def mpt_plot(self, bode='off', fitting='off', rr='off', legend='on', savefig='none'):
+    def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
         fig = figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
         fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
         ax = fig.add_subplot(111, aspect='equal')
         
+        ### Figure specifics
+        if legend == 'on': 
+            ax.legend(loc='best', fontsize=10, frameon=False)
+        ax.set_xlabel("Z' [$\Omega$]")
+        ax.set_ylabel("-Z'' [$\Omega$]")
+
+        if nyq_xlim != 'none':
+            ax.set_xlim(nyq_xlim[0], nyq_xlim[1])
+        if nyq_ylim != 'none':
+            ax.set_ylim(nyq_ylim[0], nyq_ylim[1])
         
         #Color initialization
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
@@ -1870,23 +1880,7 @@ class mpt_data:
         
         #Call to the fitting function given by PyEIS
         self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
-        
-        #maybe take a look at the plots,may help for accuracy, don't really need it...
-        #mpt_data.EIS_plot(fitting = 'on')
-        
-        
-        #print out the values
-        #print(mpt_data.fit_Rs)
-        #print()
-        #print(mpt_data.fit_R)
-        #print(mpt_data.fit_n)
-        #print(mpt_data.fit_fs)
-        #print()
-        #print(mpt_data.fit_R2)
-        #print(mpt_data.fit_n2)
-        #print(mpt_data.fit_fs2)
-        
-        #export the new guess package
+        #Export Package as a list
         guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
         return guess_package
 
