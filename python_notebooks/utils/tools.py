@@ -121,8 +121,8 @@ class mpt_data:
         return
 
     def set_new_gph_dims(self, new_width, new_height):
-        set_gph_width(new_width)
-        set_gph_height(height)
+        self.set_gph_width(new_width)
+        self.set_gph_height(new_height)
         return
 
 
