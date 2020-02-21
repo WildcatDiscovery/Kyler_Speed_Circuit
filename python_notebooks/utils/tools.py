@@ -35,16 +35,6 @@ Rg = codata.physical_constants['molar gas constant'][0]
 from utils.data_extraction import *
 from utils.lin_kk import *
 
-
-#IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
-#working on adjusting to mpt if not an mpt file to begin with
-def importer(path, data, mask_front, mask_back, width, height):
-    mpt = mpt_data(path, data, mask = [mask_front, mask_back], gph_width = width, gph_height = height)
-    df = mpt.df_raw
-    mpt.mpt_plot()
-    return [mpt, df]
-
-
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
         self.width = gph_width
@@ -111,7 +101,10 @@ class mpt_data:
         else:
             print('__init__ error (#2)')
     
-    #DEFINE NEW DIMENSIONS
+    #DEFINE SIZE OF GRAPH
+    #BE CAREFUL AS THIS DOESN'T DETERMINE THE DIMENSIONS OF THE WINDOW
+    #THIS ONLY SETS THE DIMENSIONS OF THE SIZE OF THE WINDOW
+    #ACTUAL GRAPH DATA DIMENSIONS CAN BE ADJUSTED IN THE PLOTTING FUNCTION
     def set_gph_width(self, new_width):
         self.width = new_width
         return
@@ -125,24 +118,29 @@ class mpt_data:
         self.set_gph_height(new_height)
         return
 
-
-
-
-
-
-    def mpt_plot(self, bode='off', fitting='off', rr='off', legend='on', savefig='none'):
+    def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
         fig = figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
         fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
-        ax = fig.add_subplot(111, aspect='equal')
+        ax = fig.add_subplot(211, aspect='equal')
         
+        
+        ### Figure specifics
+        if legend == 'on': 
+            ax.legend(loc='best', fontsize=10, frameon=False)
+        ax.set_xlabel("Z' [$\Omega$]")
+        ax.set_ylabel("-Z'' [$\Omega$]")
+        if x_window != 'none':
+            ax.set_xlim(x_window[0], x_window[1])
+        if y_window != 'none':
+            ax.set_ylim(y_window[0], y_window[1])
         
         #Color initialization
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
         colors_real = sns.color_palette("Blues", n_colors=len(self.df)+2)
         colors_imag = sns.color_palette("Oranges", n_colors=len(self.df)+2)
-
+    
         #Label functions
         self.label_re_1 = []
         self.label_im_1 = []
@@ -158,6 +156,57 @@ class mpt_data:
                 self.label_im_1.append("Z'' ("+str(np.round(np.average(self.df[i].E_avg), 2))+' V)')
                 self.label_cycleno.append(str(np.round(np.average(self.df[i].E_avg), 2))+' V')
 
+        ### Relative Residuals on Fit
+        if rr=='on':
+            ax2 = fig.add_subplot(212)
+            if fitting == 'off':
+                print('Fitting has not been performed, thus the relative residuals cannot be determined')
+            elif fitting == 'on':
+                self.rr_real = []
+                self.rr_imag = []
+                for i in range(len(self.df)):
+                    self.rr_real.append(residual_real(re=self.df[i].re.values, fit_re=self.circuit_fit[i].real, fit_im=-self.circuit_fit[i].imag))
+                    self.rr_imag.append(residual_imag(im=self.df[i].im.values, fit_re=self.circuit_fit[i].real, fit_im=-self.circuit_fit[i].imag))
+                    if legend == 'on':
+                        ax2.plot(np.log10(self.df[i].f), self.rr_real[i]*100, color=colors_real[i], marker='D', ms=6, lw=1, ls='--', label='#'+str(i+1))
+                        ax2.plot(np.log10(self.df[i].f), self.rr_imag[i]*100, color=colors_imag[i], marker='s', ms=6, lw=1, ls='--',label='')
+                    elif legend == 'potential':
+                        ax2.plot(np.log10(self.df[i].f), self.rr_real[i]*100, color=colors_real[i], marker='D', ms=6, lw=1, ls='--', label=str(np.round(np.average(self.df[i].E_avg.values),2))+' V')
+                        ax2.plot(np.log10(self.df[i].f), self.rr_imag[i]*100, color=colors_imag[i], marker='s', ms=6, lw=1, ls='--',label='')
+
+                    ax2.axhline(0, ls='--', c='k', alpha=.5)
+                    ax2.set_xlabel("log(f) [Hz]")
+                    ax2.set_ylabel("$\Delta$Z', $\Delta$-Z'' [%]")
+
+                #Automatic y-limits limits
+                self.rr_im_min = []
+                self.rr_im_max = []
+                self.rr_re_min = []
+                for i in range(len(self.df)): # needs to be within a loop if cycles have different number of data points     
+                    self.rr_im_min = np.min(self.rr_imag[i])
+                    self.rr_im_max = np.max(self.rr_imag[i])
+                    self.rr_re_min = np.min(self.rr_real[i])
+                    self.rr_re_max = np.max(self.rr_real[i])
+                if self.rr_re_max > self.rr_im_max:
+                    self.rr_ymax = self.rr_re_max
+                else:
+                    self.rr_ymax = self.rr_im_max
+                if self.rr_re_min < self.rr_im_min:
+                    self.rr_ymin = self.rr_re_min
+                else:
+                    self.rr_ymin  = self.rr_im_min
+                if np.abs(self.rr_ymin) > np.abs(self.rr_ymax):
+                    ax2.set_ylim(self.rr_ymin *100*1.5, np.abs(self.rr_ymin)*100*1.5)
+                    ax2.annotate("$\Delta$Z'", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymin )*100*1.2), color=colors_real[-1], fontsize=12)
+                    ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymin )*100*0.9), color=colors_imag[-1], fontsize=12)
+                elif np.abs(self.rr_ymin) < np.abs(self.rr_ymax):
+                    ax2.set_ylim(np.negative(self.rr_ymax)*100*1.5, np.abs(self.rr_ymax)*100*1.5)                    
+                    ax2.annotate("$\Delta$Z'", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*1.2), color=colors_real[-1], fontsize=12)
+                    ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*0.9), color=colors_imag[-1], fontsize=12)
+    
+                if legend == 'on' or legend == 'potential':
+                    ax2.legend(loc='best', fontsize=10, frameon=False)
+
 
 
         ### Nyquist Plot
@@ -165,56 +214,9 @@ class mpt_data:
             ax.plot(self.df[i].re, self.df[i].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', label=self.label_cycleno[i])
             if fitting == 'on':
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
-
         
-
+    #FITTING THE NYQUIST PLOT ONTO THE GRAPH
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
-        '''
-        EIS_fit() fits experimental data to an equivalent circuit model using complex non-linear least-squares (CNLS) fitting procedure and allows for batch fitting.
-        
-        Kristian B. Knudsen (kknu@berkeley.edu / kristianbknudsen@gmail.com)
-        
-        Inputs
-        ------------
-        - circuit:
-          Choose an equivalent circuits and defined circuit as a string. The following circuits are avaliable.
-            - RC
-            - RQ
-            - R-RQ
-            - R-RQ-RQ
-            - R-Q
-            - R-RQ-Q
-            - R-(Q(RW))
-            - C-RC-C
-            - Q-RQ-Q
-            - RC-RC-ZD
-            - R-TLsQ
-            - R-RQ-TLsQ
-            - R-TLs
-            - R-RQ-TLs
-            - R-TLQ
-            - R-RQ-TLQ
-            - R-TL
-            - R-RQ-TL
-            - R-TL1Dsolid (reactive interface with 1D solid-state diffusion)
-            - R-RQ-TL1Dsolid
-
-        - weight_func
-          The weight function to which the CNLS fitting is performed
-            - modulus (default)
-            - unity
-            - proportional
-        
-        - nan_policy
-        How to handle Nan or missing values in dataset
-            - ‘raise’ = raise a value error (default)
-            - ‘propagate’ = do nothing
-            - ‘omit’ = drops missing data
-        
-        Returns
-        ------------
-        Returns the fitted impedance spectra(s) but also the fitted parameters that were used in the initial guesses. To call these use e.g. self.fit_Rs
-        '''
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
@@ -250,6 +252,7 @@ class mpt_data:
         
 
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
+        #NEED TO REDOCUMENT
         '''
         Plots the Linear Kramers-Kronig (KK) Validity Test
         The script is based on Boukamp and Schōnleber et al.'s papers for fitting the resistances of multiple -(RC)- circuits
@@ -1985,122 +1988,15 @@ def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
     - params: parameters needed for CNLS
     - re: real impedance
     - im: Imaginary impedance
-    - circuit:
-      The avaliable circuits are shown below, and this this parameter needs it as a string.
-        - C
-        - Q
-        - R-C
-        - R-Q
-        - RC
-        - RQ
-        - R-RQ
-        - R-RQ-RQ
-        - R-RQ-Q
-        - R-(Q(RW))
-        - R-(Q(RM))
-        - R-RC-C
-        - R-RC-Q
-        - R-RQ-Q
-        - R-RQ-C
-        - RC-RC-ZD
-        - R-TLsQ
-        - R-RQ-TLsQ
-        - R-TLs
-        - R-RQ-TLs
-        - R-TLQ
-        - R-RQ-TLQ
-        - R-TL
-        - R-RQ-TL
-        - R-TL1Dsolid (reactive interface with 1D solid-state diffusion)
-        - R-RQ-TL1Dsolid
-
     - weight_func
       Weight function
         - modulus
         - unity
         - proportional
     '''
-    if circuit == 'C':
-        re_fit = elem_C_fit(params, w).real
-        im_fit = -elem_C_fit(params, w).imag
-    elif circuit == 'Q':
-        re_fit = elem_Q_fit(params, w).real
-        im_fit = -elem_Q_fit(params, w).imag
-    elif circuit == 'R-C':
-        re_fit = cir_RsC_fit(params, w).real
-        im_fit = -cir_RsC_fit(params, w).imag
-    elif circuit == 'R-Q':
-        re_fit = cir_RsQ_fit(params, w).real
-        im_fit = -cir_RsQ_fit(params, w).imag
-    elif circuit == 'RC':
-        re_fit = cir_RC_fit(params, w).real
-        im_fit = -cir_RC_fit(params, w).imag
-    elif circuit == 'RQ':
-        re_fit = cir_RQ_fit(params, w).real
-        im_fit = -cir_RQ_fit(params, w).imag
-    elif circuit == 'R-RQ':
-        re_fit = cir_RsRQ_fit(params, w).real
-        im_fit = -cir_RsRQ_fit(params, w).imag
-    elif circuit == 'R-RQ-RQ':
+    if circuit == 'R-RQ-RQ':
         re_fit = cir_RsRQRQ_fit(params, w).real
         im_fit = -cir_RsRQRQ_fit(params, w).imag
-    elif circuit == 'R-RC-C':
-        re_fit = cir_RsRCC_fit(params, w).real
-        im_fit = -cir_RsRCC_fit(params, w).imag
-    elif circuit == 'R-RC-Q':
-        re_fit = cir_RsRCQ_fit(params, w).real
-        im_fit = -cir_RsRCQ_fit(params, w).imag
-    elif circuit == 'R-RQ-Q':
-        re_fit = cir_RsRQQ_fit(params, w).real
-        im_fit = -cir_RsRQQ_fit(params, w).imag
-    elif circuit == 'R-RQ-C':
-        re_fit = cir_RsRQC_fit(params, w).real
-        im_fit = -cir_RsRQC_fit(params, w).imag
-    elif circuit == 'R-(Q(RW))':
-        re_fit = cir_Randles_simplified_Fit(params, w).real
-        im_fit = -cir_Randles_simplified_Fit(params, w).imag
-    elif circuit == 'R-(Q(RM))':
-        re_fit = cir_Randles_uelectrode_fit(params, w).real
-        im_fit = -cir_Randles_uelectrode_fit(params, w).imag
-    elif circuit == 'C-RC-C':
-        re_fit = cir_C_RC_C_fit(params, w).real
-        im_fit = -cir_C_RC_C_fit(params, w).imag
-    elif circuit == 'Q-RQ-Q':
-        re_fit = cir_Q_RQ_Q_Fit(params, w).real
-        im_fit = -cir_Q_RQ_Q_Fit(params, w).imag
-    elif circuit == 'RC-RC-ZD':
-        re_fit = cir_RCRCZD_fit(params, w).real
-        im_fit = -cir_RCRCZD_fit(params, w).imag
-    elif circuit == 'R-TLsQ':
-        re_fit = cir_RsTLsQ_fit(params, w).real
-        im_fit = -cir_RsTLsQ_fit(params, w).imag
-    elif circuit == 'R-RQ-TLsQ':
-        re_fit = cir_RsRQTLsQ_Fit(params, w).real
-        im_fit = -cir_RsRQTLsQ_Fit(params, w).imag
-    elif circuit == 'R-TLs':
-        re_fit = cir_RsTLs_Fit(params, w).real
-        im_fit = -cir_RsTLs_Fit(params, w).imag
-    elif circuit == 'R-RQ-TLs':
-        re_fit = cir_RsRQTLs_Fit(params, w).real
-        im_fit = -cir_RsRQTLs_Fit(params, w).imag
-    elif circuit == 'R-TLQ':
-        re_fit = cir_RsTLQ_fit(params, w).real
-        im_fit = -cir_RsTLQ_fit(params, w).imag
-    elif circuit == 'R-RQ-TLQ':
-        re_fit = cir_RsRQTLQ_fit(params, w).real
-        im_fit = -cir_RsRQTLQ_fit(params, w).imag
-    elif circuit == 'R-TL':
-        re_fit = cir_RsTL_Fit(params, w).real
-        im_fit = -cir_RsTL_Fit(params, w).imag
-    elif circuit == 'R-RQ-TL':
-        re_fit = cir_RsRQTL_fit(params, w).real
-        im_fit = -cir_RsRQTL_fit(params, w).imag
-    elif circuit == 'R-TL1Dsolid':
-        re_fit = cir_RsTL_1Dsolid_fit(params, w).real
-        im_fit = -cir_RsTL_1Dsolid_fit(params, w).imag
-    elif circuit == 'R-RQ-TL1Dsolid':
-        re_fit = cir_RsRQTL_1Dsolid_fit(params, w).real
-        im_fit = -cir_RsRQTL_1Dsolid_fit(params, w).imag
     else:
         print('Circuit is not defined in leastsq_errorfunc()')
         
