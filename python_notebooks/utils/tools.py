@@ -35,16 +35,6 @@ Rg = codata.physical_constants['molar gas constant'][0]
 from utils.data_extraction import *
 from utils.lin_kk import *
 
-
-#IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
-#working on adjusting to mpt if not an mpt file to begin with
-def importer(path, data, mask_front, mask_back, width, height):
-    mpt = mpt_data(path, data, mask = [mask_front, mask_back], gph_width = width, gph_height = height)
-    df = mpt.df_raw
-    mpt.mpt_plot()
-    return [mpt, df]
-
-
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
         self.width = gph_width
@@ -111,7 +101,10 @@ class mpt_data:
         else:
             print('__init__ error (#2)')
     
-    #DEFINE NEW DIMENSIONS
+    #DEFINE SIZE OF GRAPH
+    #BE CAREFUL AS THIS DOESN'T DETERMINE THE DIMENSIONS OF THE WINDOW
+    #THIS ONLY SETS THE DIMENSIONS OF THE SIZE OF THE WINDOW
+    #ACTUAL GRAPH DATA DIMENSIONS CAN BE ADJUSTED IN THE PLOTTING FUNCTION
     def set_gph_width(self, new_width):
         self.width = new_width
         return
@@ -125,34 +118,30 @@ class mpt_data:
         self.set_gph_height(new_height)
         return
 
-
-
-
-
-
+    #PLOTTING FUNCTION
     def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
         fig = figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
         fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
-        ax = fig.add_subplot(111, aspect='equal')
+        ax = fig.add_subplot(211, aspect='equal')
+        
         
         ### Figure specifics
         if legend == 'on': 
             ax.legend(loc='best', fontsize=10, frameon=False)
         ax.set_xlabel("Z' [$\Omega$]")
         ax.set_ylabel("-Z'' [$\Omega$]")
-
-        if nyq_xlim != 'none':
-            ax.set_xlim(nyq_xlim[0], nyq_xlim[1])
-        if nyq_ylim != 'none':
-            ax.set_ylim(nyq_ylim[0], nyq_ylim[1])
+        if x_window != 'none':
+            ax.set_xlim(x_window[0], x_window[1])
+        if y_window != 'none':
+            ax.set_ylim(y_window[0], y_window[1])
         
         #Color initialization
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
         colors_real = sns.color_palette("Blues", n_colors=len(self.df)+2)
         colors_imag = sns.color_palette("Oranges", n_colors=len(self.df)+2)
-
+    
         #Label functions
         self.label_re_1 = []
         self.label_im_1 = []
@@ -168,6 +157,57 @@ class mpt_data:
                 self.label_im_1.append("Z'' ("+str(np.round(np.average(self.df[i].E_avg), 2))+' V)')
                 self.label_cycleno.append(str(np.round(np.average(self.df[i].E_avg), 2))+' V')
 
+        ### Relative Residuals on Fit
+        if rr=='on':
+            ax2 = fig.add_subplot(212)
+            if fitting == 'off':
+                print('Fitting has not been performed, thus the relative residuals cannot be determined')
+            elif fitting == 'on':
+                self.rr_real = []
+                self.rr_imag = []
+                for i in range(len(self.df)):
+                    self.rr_real.append(residual_real(re=self.df[i].re.values, fit_re=self.circuit_fit[i].real, fit_im=-self.circuit_fit[i].imag))
+                    self.rr_imag.append(residual_imag(im=self.df[i].im.values, fit_re=self.circuit_fit[i].real, fit_im=-self.circuit_fit[i].imag))
+                    if legend == 'on':
+                        ax2.plot(np.log10(self.df[i].f), self.rr_real[i]*100, color=colors_real[i], marker='D', ms=6, lw=1, ls='--', label='#'+str(i+1))
+                        ax2.plot(np.log10(self.df[i].f), self.rr_imag[i]*100, color=colors_imag[i], marker='s', ms=6, lw=1, ls='--',label='')
+                    elif legend == 'potential':
+                        ax2.plot(np.log10(self.df[i].f), self.rr_real[i]*100, color=colors_real[i], marker='D', ms=6, lw=1, ls='--', label=str(np.round(np.average(self.df[i].E_avg.values),2))+' V')
+                        ax2.plot(np.log10(self.df[i].f), self.rr_imag[i]*100, color=colors_imag[i], marker='s', ms=6, lw=1, ls='--',label='')
+
+                    ax2.axhline(0, ls='--', c='k', alpha=.5)
+                    ax2.set_xlabel("log(f) [Hz]")
+                    ax2.set_ylabel("$\Delta$Z', $\Delta$-Z'' [%]")
+
+                #Automatic y-limits limits
+                self.rr_im_min = []
+                self.rr_im_max = []
+                self.rr_re_min = []
+                for i in range(len(self.df)): # needs to be within a loop if cycles have different number of data points     
+                    self.rr_im_min = np.min(self.rr_imag[i])
+                    self.rr_im_max = np.max(self.rr_imag[i])
+                    self.rr_re_min = np.min(self.rr_real[i])
+                    self.rr_re_max = np.max(self.rr_real[i])
+                if self.rr_re_max > self.rr_im_max:
+                    self.rr_ymax = self.rr_re_max
+                else:
+                    self.rr_ymax = self.rr_im_max
+                if self.rr_re_min < self.rr_im_min:
+                    self.rr_ymin = self.rr_re_min
+                else:
+                    self.rr_ymin  = self.rr_im_min
+                if np.abs(self.rr_ymin) > np.abs(self.rr_ymax):
+                    ax2.set_ylim(self.rr_ymin *100*1.5, np.abs(self.rr_ymin)*100*1.5)
+                    ax2.annotate("$\Delta$Z'", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymin )*100*1.2), color=colors_real[-1], fontsize=12)
+                    ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymin )*100*0.9), color=colors_imag[-1], fontsize=12)
+                elif np.abs(self.rr_ymin) < np.abs(self.rr_ymax):
+                    ax2.set_ylim(np.negative(self.rr_ymax)*100*1.5, np.abs(self.rr_ymax)*100*1.5)                    
+                    ax2.annotate("$\Delta$Z'", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*1.2), color=colors_real[-1], fontsize=12)
+                    ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*0.9), color=colors_imag[-1], fontsize=12)
+    
+                if legend == 'on' or legend == 'potential':
+                    ax2.legend(loc='best', fontsize=10, frameon=False)
+
 
 
         ### Nyquist Plot
@@ -175,12 +215,9 @@ class mpt_data:
             ax.plot(self.df[i].re, self.df[i].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', label=self.label_cycleno[i])
             if fitting == 'on':
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
-
         
-
+    #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
-        #Fitting Function derived from the PyEIS fitting function
-        #Fits Kyler's Circuit, but a dev version uses the R - RQ - RQ circuit
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
@@ -188,34 +225,35 @@ class mpt_data:
             self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
             print(report_fit(self.Fit[i]))
             self.fit_E.append(np.average(self.df[i].E_avg))
-        if circuit == 'R-RQ-RQ':
-            self.fit_Rs = []
-            self.fit_R = []
-            self.fit_n = []
-            self.fit_R2 = []
-            self.fit_n2 = []
-            self.fit_fs = []
-            self.fit_fs2 = []
-            self.fit_Q = []
-            self.fit_Q2 = []
-            for i in range(len(self.df)):
-                if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()):
-                    self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value))
-                    self.fit_Rs.append(self.Fit[i].params.get('Rs').value)
-                    self.fit_R.append(self.Fit[i].params.get('R').value)
-                    self.fit_n.append(self.Fit[i].params.get('n').value)
-                    self.fit_fs.append(self.Fit[i].params.get('fs').value)
-                    self.fit_R2.append(self.Fit[i].params.get('R2').value)
-                    self.fit_n2.append(self.Fit[i].params.get('n2').value)
-                    self.fit_fs2.append(self.Fit[i].params.get('fs2').value)
-                    self.fit_Q.append(1/(self.fit_R[0] * (self.fit_fs[0] * 2 * np.pi)**self.fit_n[0])) 
-                    self.fit_Q2.append(1/(self.fit_R2[0] * (self.fit_fs2[0] * 2 * np.pi)**self.fit_n2[0])) 
-                else:
-                    print("Circuit Error, check inputs")
-                    break
+        assert circuit == 'R-RQ-RQ'
+        self.fit_Rs = []
+        self.fit_R = []
+        self.fit_n = []
+        self.fit_R2 = []
+        self.fit_n2 = []
+        self.fit_fs = []
+        self.fit_fs2 = []
+        self.fit_Q = []
+        self.fit_Q2 = []
+        for i in range(len(self.df)):
+            if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()):
+                self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value))
+                self.fit_Rs.append(self.Fit[i].params.get('Rs').value)
+                self.fit_R.append(self.Fit[i].params.get('R').value)
+                self.fit_n.append(self.Fit[i].params.get('n').value)
+                self.fit_fs.append(self.Fit[i].params.get('fs').value)
+                self.fit_R2.append(self.Fit[i].params.get('R2').value)
+                self.fit_n2.append(self.Fit[i].params.get('n2').value)
+                self.fit_fs2.append(self.Fit[i].params.get('fs2').value)
+                self.fit_Q.append(1/(self.fit_R[0] * (self.fit_fs[0] * 2 * np.pi)**self.fit_n[0])) 
+                self.fit_Q2.append(1/(self.fit_R2[0] * (self.fit_fs2[0] * 2 * np.pi)**self.fit_n2[0])) 
+            else:
+                print("Circuit Error, check inputs")
+                break
         
-
+    #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
+        #NEED TO REDOCUMENT
         '''
         Plots the Linear Kramers-Kronig (KK) Validity Test
         The script is based on Boukamp and Schōnleber et al.'s papers for fitting the resistances of multiple -(RC)- circuits
@@ -561,57 +599,7 @@ class mpt_data:
             for i in range(len(self.df)):
                 ax.plot(self.df[i].re, self.df[i].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', alpha=.7, label=self.label_cycleno[i])
     
-            ### Bode Plot
-            if bode == 'on':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_re_1[i])
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_im_1[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("Z', -Z'' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 're':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("Z' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'log_re':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(Z') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'im':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("-Z'' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'log_im':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(-Z'') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)      
-
-            elif bode == 'log':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_re_1[i])
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_im_1[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(Z', -Z'') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
+        
             ### Kramers-Kronig Relative Residuals    
             for i in range(len(self.df)):
                 ax2.plot(np.log10(self.df[i].f), self.KK_rr_re[i]*100, color=colors_real[i+1], marker='D', ls='--', ms=6, alpha=.7, label=self.label_re_1[i])
@@ -1880,7 +1868,23 @@ class mpt_data:
         
         #Call to the fitting function given by PyEIS
         self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
-        #Export Package as a list
+        
+        #maybe take a look at the plots,may help for accuracy, don't really need it...
+        #mpt_data.EIS_plot(fitting = 'on')
+        
+        
+        #print out the values
+        #print(mpt_data.fit_Rs)
+        #print()
+        #print(mpt_data.fit_R)
+        #print(mpt_data.fit_n)
+        #print(mpt_data.fit_fs)
+        #print()
+        #print(mpt_data.fit_R2)
+        #print(mpt_data.fit_n2)
+        #print(mpt_data.fit_fs2)
+        
+        #export the new guess package
         guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
         return guess_package
 
@@ -1917,11 +1921,36 @@ class mpt_data:
         return new_guess
 
 def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
+    '''
+    Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
+    until the total sum of errors is minimized.
     
-    #Least Squared Error Function for our R RQ RQ circuit
-    #ADJUST IN ACCORDANCE OF THE NEW CIRCUIT!!!!
-    re_fit = cir_RsRQRQ_fit(params, w).real
-    im_fit = -cir_RsRQRQ_fit(params, w).imag
+    During the minimization the fit is weighed, and currently three different weigh options are avaliable:
+        - modulus
+        - unity
+        - proportional
+    
+    Modulus is generially recommended as random errors and a bias can exist in the experimental data.
+        
+    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+
+    Inputs
+    ------------
+    - params: parameters needed for CNLS
+    - re: real impedance
+    - im: Imaginary impedance
+    - weight_func
+      Weight function
+        - modulus
+        - unity
+        - proportional
+    '''
+    if circuit == 'R-RQ-RQ':
+        re_fit = cir_RsRQRQ_fit(params, w).real
+        im_fit = -cir_RsRQRQ_fit(params, w).imag
+    else:
+        print('Circuit is not defined in leastsq_errorfunc()')
+        
     error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
     
     #Different Weighing options, see Lasia
@@ -1990,8 +2019,6 @@ def cir_RsRQRQ_fit(params, w):
     Rs = params['Rs']
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
 
-
-#TAKEN FROM PyEIS Library
 def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none'):
     '''
     Simulation Function: -Rs-RQ-RQ-
