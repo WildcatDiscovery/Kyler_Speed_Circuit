@@ -665,6 +665,7 @@ class mpt_data:
                 self.KK_rr_im_max = np.max(self.KK_rr_im)
                 self.KK_rr_re_min = np.min(self.KK_rr_re)
                 self.KK_rr_re_max = np.max(self.KK_rr_re)
+                
                 if self.KK_rr_re_max > self.KK_rr_im_max:
                     self.KK_ymax = self.KK_rr_re_max
                 else:
