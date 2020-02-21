@@ -39,7 +39,7 @@ from utils.lin_kk import *
 #IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
 #working on adjusting to mpt if not an mpt file to begin with
 def importer(path, data, mask_front, mask_back, width, height):
-    mpt = mpt_data(path, data, mask = [mask_front, mask_back], gph_width = width, gph_height = height)
+    mpt = mpt_data(path, data, mask = [10**mask_front, 10**mask_back], gph_width = width, gph_height = height)
     df = mpt.df_raw
     mpt.mpt_plot()
     return [mpt, df]
@@ -128,11 +128,6 @@ class mpt_data:
         self.set_gph_height(new_height)
         return
 
-
-
-
-
-
     def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
@@ -155,7 +150,7 @@ class mpt_data:
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
         colors_real = sns.color_palette("Blues", n_colors=len(self.df)+2)
         colors_imag = sns.color_palette("Oranges", n_colors=len(self.df)+2)
-
+        print('HEY')
         #Label functions
         self.label_re_1 = []
         self.label_im_1 = []
@@ -228,7 +223,6 @@ class mpt_data:
             ax.plot(self.df[i].re, self.df[i].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', label=self.label_cycleno[i])
             if fitting == 'on':
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
-
         
     #FITTING THE NYQUIST PLOT ONTO THE GRAPH
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
@@ -267,6 +261,7 @@ class mpt_data:
         
 
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
+        #NEED TO REDOCUMENT
         '''
         Plots the Linear Kramers-Kronig (KK) Validity Test
         The script is based on Boukamp and Schōnleber et al.'s papers for fitting the resistances of multiple -(RC)- circuits
