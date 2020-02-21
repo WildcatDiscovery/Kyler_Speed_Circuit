@@ -150,7 +150,7 @@ class mpt_data:
         colors = sns.color_palette("colorblind", n_colors=len(self.df))
         colors_real = sns.color_palette("Blues", n_colors=len(self.df)+2)
         colors_imag = sns.color_palette("Oranges", n_colors=len(self.df)+2)
-        print('HEY')
+    
         #Label functions
         self.label_re_1 = []
         self.label_im_1 = []
