@@ -118,6 +118,7 @@ class mpt_data:
         self.set_gph_height(new_height)
         return
 
+    #PLOTTING FUNCTION
     def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
@@ -215,7 +216,7 @@ class mpt_data:
             if fitting == 'on':
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
         
-    #FITTING THE NYQUIST PLOT ONTO THE GRAPH
+    #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
         self.Fit = []
         self.circuit_fit = []
@@ -250,7 +251,7 @@ class mpt_data:
                 print("Circuit Error, check inputs")
                 break
         
-
+    #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
         #NEED TO REDOCUMENT
         '''
@@ -598,57 +599,7 @@ class mpt_data:
             for i in range(len(self.df)):
                 ax.plot(self.df[i].re, self.df[i].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', alpha=.7, label=self.label_cycleno[i])
     
-            ### Bode Plot
-            if bode == 'on':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_re_1[i])
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_im_1[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("Z', -Z'' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 're':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("Z' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'log_re':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(Z') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'im':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("-Z'' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'log_im':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(-Z'') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)      
-
-            elif bode == 'log':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_re_1[i])
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_im_1[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(Z', -Z'') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
+        
             ### Kramers-Kronig Relative Residuals    
             for i in range(len(self.df)):
                 ax2.plot(np.log10(self.df[i].f), self.KK_rr_re[i]*100, color=colors_real[i+1], marker='D', ls='--', ms=6, alpha=.7, label=self.label_re_1[i])
