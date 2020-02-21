@@ -35,16 +35,6 @@ Rg = codata.physical_constants['molar gas constant'][0]
 from utils.data_extraction import *
 from utils.lin_kk import *
 
-
-#IMPORT THE DATA FILE IN THE FORM OF AN MPT FILE
-#working on adjusting to mpt if not an mpt file to begin with
-def importer(path, data, mask_front, mask_back, width, height):
-    mpt = mpt_data(path, data, mask = [10**mask_front, 10**mask_back], gph_width = width, gph_height = height)
-    df = mpt.df_raw
-    mpt.mpt_plot()
-    return [mpt, df]
-
-
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
         self.width = gph_width
@@ -134,7 +124,7 @@ class mpt_data:
         fig = figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
         fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
         ax = fig.add_subplot(211, aspect='equal')
-        ax2 = fig.add_subplot(212)
+        
         
         ### Figure specifics
         if legend == 'on': 
@@ -168,6 +158,7 @@ class mpt_data:
 
         ### Relative Residuals on Fit
         if rr=='on':
+            ax2 = fig.add_subplot(212)
             if fitting == 'off':
                 print('Fitting has not been performed, thus the relative residuals cannot be determined')
             elif fitting == 'on':
