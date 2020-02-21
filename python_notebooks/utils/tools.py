@@ -665,7 +665,7 @@ class mpt_data:
                 self.KK_rr_im_max = np.max(self.KK_rr_im)
                 self.KK_rr_re_min = np.min(self.KK_rr_re)
                 self.KK_rr_re_max = np.max(self.KK_rr_re)
-                
+
                 if self.KK_rr_re_max > self.KK_rr_im_max:
                     self.KK_ymax = self.KK_rr_re_max
                 else:
@@ -1896,7 +1896,7 @@ class mpt_data:
             total = 0
             for i in range(len(before)):
                 total += (before[i] - after[i])
-            print(total)    
+            print('total error: ', total)    
             return abs(total) <= 1e-10
         except IndexError as e:
             #IF LISTS AREN'T THE SAME LENGTH
@@ -1917,7 +1917,7 @@ class mpt_data:
             print("ITERATION NO: ", counter)
             counter += 1
             print(new_guess)
-            if counter == 5000:
+            if counter == 1000:
                 return new_guess
         return new_guess
 
@@ -2057,3 +2057,28 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
         n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
         
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+
+#MUST BE UPDATED
+
+def kk_masker(number):
+    self.kk_df['difference'] = abs(self.kk_df['re'] - self.kk_df['im'])
+    diff_mean = self.kk_df['difference'].mean()
+    masked_df = self.kk_df[self.kk_df['difference'] < diff_mean * number]
+    re2 = mpt_data(path, data, mask = [10**masked_df['f'].max(),10**masked_df['f'].min()])
+    re2.set_new_gph_dims(15,15)
+    re2.mpt_plot(x_window = [0,5000], y_window = [0,5000])
+    #GUESSES BROUGHT FROM INIT VALUES
+    Rs_guess = 40
+
+    R_guess = 2959
+    n_guess = 0.8
+    fs_guess = 23023
+
+    R2_guess = 258738
+    n2_guess = 0.8
+    fs2_guess = 0.2
+
+
+    #COMPLETE FUNCTION
+    fit_guess = re2.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
+    re2.mpt_plot(fitting = 'on',rr = 'on')
