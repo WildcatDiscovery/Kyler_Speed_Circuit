@@ -2060,10 +2060,10 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
 
 #MUST BE UPDATED
 
-def kk_masker(number):
-    self.kk_df['difference'] = abs(self.kk_df['re'] - self.kk_df['im'])
-    diff_mean = self.kk_df['difference'].mean()
-    masked_df = self.kk_df[self.kk_df['difference'] < diff_mean * number]
+def kk_masker(mpt, kk_df, number):
+    kk_df['difference'] = abs(kk_df['re'] - kk_df['im'])
+    diff_mean = kk_df['difference'].mean()
+    masked_df = kk_df[kk_df['difference'] < diff_mean * number]
     re2 = mpt_data(path, data, mask = [10**masked_df['f'].max(),10**masked_df['f'].min()])
     re2.set_new_gph_dims(15,15)
     re2.mpt_plot(x_window = [0,5000], y_window = [0,5000])
@@ -2080,5 +2080,5 @@ def kk_masker(number):
 
 
     #COMPLETE FUNCTION
-    fit_guess = re2.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
-    re2.mpt_plot(fitting = 'on',rr = 'on')
+    fit_guess = mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
+    mpt.mpt_plot(fitting = 'on',rr = 'on')
