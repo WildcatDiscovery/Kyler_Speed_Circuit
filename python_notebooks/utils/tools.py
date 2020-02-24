@@ -41,6 +41,7 @@ class mpt_data:
         self.height = gph_height
         self.df_raw0 = []
         self.cycleno = []
+        self.mask = mask
         for j in range(len(data)):
             if data[j].find(".mpt") != -1: #file is a .mpt file
                 self.df_raw0.append(extract_mpt(path=path, EIS_name=data[j])) #reads all datafiles
@@ -1893,11 +1894,11 @@ class mpt_data:
     #IF THIS DOESN'T RETURN TRUE, WE RUN THE GUESSER UNTIL IT DOES
     def thresh_verif(self, before, after):
         try:
-            total = 0
+            self.error_total = 0
             for i in range(len(before)):
-                total += (before[i] - after[i])
-            print('total error: ', total)    
-            return abs(total) <= 1e-10
+                self.error_total += (before[i] - after[i])
+            print('total error: ', self.error_total)    
+            return abs(self.error_total) <= 1e-10
         except IndexError as e:
             #IF LISTS AREN'T THE SAME LENGTH
             print("Lists are not the same length")
@@ -1908,16 +1909,18 @@ class mpt_data:
     #Note:Sometimes the graph just may not be able to get a perfect fit, so 
     #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
     def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
+        self.counter = 0
+        self.counter += 1
+        print("ITERATION NO: ", self.counter)
         guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
         new_guess =self.guess(guess_package)
-        counter = 0
         while not self.thresh_verif(guess_package, new_guess):
             guess_package = new_guess
+            self.counter += 1
             new_guess = self.guess(new_guess)
-            print("ITERATION NO: ", counter)
-            counter += 1
+            print("ITERATION NO: ", self.counter)
             print(new_guess)
-            if counter == 1000:
+            if self.counter == 1000:
                 return new_guess
         return new_guess
 
@@ -2064,9 +2067,7 @@ def kk_masker(mpt, kk_df, number):
     kk_df['difference'] = abs(kk_df['re'] - kk_df['im'])
     diff_mean = kk_df['difference'].mean()
     masked_df = kk_df[kk_df['difference'] < diff_mean * number]
-    re2 = mpt_data(path, data, mask = [10**masked_df['f'].max(),10**masked_df['f'].min()])
-    re2.set_new_gph_dims(15,15)
-    re2.mpt_plot(x_window = [0,5000], y_window = [0,5000])
+    
     #GUESSES BROUGHT FROM INIT VALUES
     Rs_guess = 40
 
