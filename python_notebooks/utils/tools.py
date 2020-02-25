@@ -1882,9 +1882,10 @@ class mpt_data:
     #ITERATIVE GUESSER
     #Note:Sometimes the graph just may not be able to get a perfect fit, so 
     #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
-    def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
+    def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess, threshold = 1e-10):
         self.counter = 0
         self.counter += 1
+        self.threshold = threshold
         print("ITERATION NO: ", self.counter)
         guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
         new_guess =self.guess(guess_package)
@@ -1905,7 +1906,7 @@ class mpt_data:
             for i in range(len(before)):
                 self.error_total += (before[i] - after[i])
             print('total error: ', self.error_total)    
-            return abs(self.error_total) <= 1e-10
+            return abs(self.error_total) <= self.threshold
         except IndexError as e:
             #IF LISTS AREN'T THE SAME LENGTH
             print("Lists are not the same length")
