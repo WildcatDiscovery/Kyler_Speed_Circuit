@@ -1873,40 +1873,12 @@ class mpt_data:
         #Call to the fitting function given by PyEIS
         self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
         
-        #maybe take a look at the plots,may help for accuracy, don't really need it...
-        #mpt_data.EIS_plot(fitting = 'on')
-        
-        
-        #print out the values
-        #print(mpt_data.fit_Rs)
-        #print()
-        #print(mpt_data.fit_R)
-        #print(mpt_data.fit_n)
-        #print(mpt_data.fit_fs)
-        #print()
-        #print(mpt_data.fit_R2)
-        #print(mpt_data.fit_n2)
-        #print(mpt_data.fit_fs2)
-        
         #export the new guess package
         guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
         return guess_package
 
     #THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
     #IF THIS DOESN'T RETURN TRUE, WE RUN THE GUESSER UNTIL IT DOES
-    def thresh_verif(self, before, after):
-        try:
-            self.error_total = 0
-            for i in range(len(before)):
-                self.error_total += (before[i] - after[i])
-            print('total error: ', self.error_total)    
-            return abs(self.error_total) <= 1e-10
-        except IndexError as e:
-            #IF LISTS AREN'T THE SAME LENGTH
-            print("Lists are not the same length")
-            return
-
-
     #ITERATIVE GUESSER
     #Note:Sometimes the graph just may not be able to get a perfect fit, so 
     #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
@@ -1921,11 +1893,25 @@ class mpt_data:
             self.counter += 1
             new_guess = self.guess(new_guess)
             print("ITERATION NO: ", self.counter)
-            print(new_guess)
+            #print(new_guess)
             if self.counter == 1000:
                 return new_guess
         return new_guess
-    
+
+
+    def thresh_verif(self, before, after):
+        try:
+            self.error_total = 0
+            for i in range(len(before)):
+                self.error_total += (before[i] - after[i])
+            print('total error: ', self.error_total)    
+            return abs(self.error_total) <= 1e-10
+        except IndexError as e:
+            #IF LISTS AREN'T THE SAME LENGTH
+            print("Lists are not the same length")
+            return
+
+
     def masker(self,number = 1):
 
         num_RC='auto' 
