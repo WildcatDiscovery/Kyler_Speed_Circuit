@@ -10,7 +10,7 @@ Now that we imported our data, we can start visualizing it to better understand 
 ex_mpt.mpt_plot()
 ```
 
-![](.gitbook/assets/image%20%2816%29.png)
+![](.gitbook/assets/image%20%2819%29.png)
 
 ## Graph Dimensions
 

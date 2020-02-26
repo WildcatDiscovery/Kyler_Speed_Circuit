@@ -24,13 +24,13 @@ Essentially, the process of how Kyler's Speed Circuit works is that it takes in 
 
 
 
-![Here we have a Nyvquist Impedance graph that has not been fitted yet.](.gitbook/assets/image%20%288%29.png)
+![Here we have a Nyvquist Impedance graph that has not been fitted yet.](.gitbook/assets/image%20%2810%29.png)
 
-![This graph has been fitted; the red dots overlay our initial graph](.gitbook/assets/image%20%2812%29.png)
+![This graph has been fitted; the red dots overlay our initial graph](.gitbook/assets/image%20%2814%29.png)
 
 The final result yields a set of coefficients for our circuit equation. We start with a set of arbitrary initial values and iterate to the optimal set of values. We can then export these coefficients to a txt file or excel sheet.
 
-![Here is our initial set of coefficients, which will be run into the guessing iterator](.gitbook/assets/image%20%2819%29.png)
+![Here is our initial set of coefficients, which will be run into the guessing iterator](.gitbook/assets/image%20%2822%29.png)
 
 ![After 15 iterations, we achieve a total error of &amp;gt;1e-10 with this set of coefficients ](.gitbook/assets/image%20%283%29.png)
 

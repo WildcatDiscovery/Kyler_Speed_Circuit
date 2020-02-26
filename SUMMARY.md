@@ -6,4 +6,5 @@
 * [Plotting the Data](plotting-the-data.md)
 * [Fitting the Data](fitting-the-data.md)
 * [Masking the Data](masking-the-data.md)
+* [Automated Process](automated-process.md)
 
