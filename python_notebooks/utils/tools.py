@@ -2024,6 +2024,7 @@ class mpt_data:
             return masked_mpt.masker(number * .9)
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
 
+
 def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
     '''
     Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
@@ -2160,3 +2161,20 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
         n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
         
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+
+#Fully Automated Process
+def full_auto(path,data):
+    ex_mpt = mpt_data(path,data)
+    masked_mpt = mpt_data(path,data, mask = [ex_mpt.masker()[0], ex_mpt.masker()[1]])
+
+    Rs_guess = 1
+
+    R_guess = 1
+    n_guess = 0.8
+    fs_guess = 1
+
+    R2_guess = 1
+    n2_guess = 0.8
+    fs2_guess = 1
+
+    return masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
