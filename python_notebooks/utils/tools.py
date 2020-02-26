@@ -37,10 +37,13 @@ from utils.lin_kk import *
 
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
+        self.path = path
+        self.data = data
         self.width = gph_width
         self.height = gph_height
         self.df_raw0 = []
         self.cycleno = []
+        self.mask = mask
         for j in range(len(data)):
             if data[j].find(".mpt") != -1: #file is a .mpt file
                 self.df_raw0.append(extract_mpt(path=path, EIS_name=data[j])) #reads all datafiles
@@ -118,6 +121,7 @@ class mpt_data:
         self.set_gph_height(new_height)
         return
 
+    #PLOTTING FUNCTION
     def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
@@ -215,7 +219,7 @@ class mpt_data:
             if fitting == 'on':
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
         
-    #FITTING THE NYQUIST PLOT ONTO THE GRAPH
+    #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
         self.Fit = []
         self.circuit_fit = []
@@ -250,7 +254,7 @@ class mpt_data:
                 print("Circuit Error, check inputs")
                 break
         
-
+    #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
         #NEED TO REDOCUMENT
         '''
@@ -598,57 +602,7 @@ class mpt_data:
             for i in range(len(self.df)):
                 ax.plot(self.df[i].re, self.df[i].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', alpha=.7, label=self.label_cycleno[i])
     
-            ### Bode Plot
-            if bode == 'on':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_re_1[i])
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_im_1[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("Z', -Z'' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 're':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].re, color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("Z' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'log_re':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(Z') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'im':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), self.df[i].im, color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("-Z'' [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
-            elif bode == 'log_im':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_cycleno[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(-Z'') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)      
-
-            elif bode == 'log':
-                for i in range(len(self.df)):
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].re), color=colors_real[i+1], marker='D', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_re_1[i])
-                    ax1.plot(np.log10(self.df[i].f), np.log10(self.df[i].im), color=colors_imag[i+1], marker='s', ms=3, lw=2.25, ls='-', alpha=.7, label=self.label_im_1[i])
-                    ax1.set_xlabel("log(f) [Hz]")
-                    ax1.set_ylabel("log(Z', -Z'') [$\Omega$]")
-                    if legend == 'on' or legend == 'potential':
-                        ax1.legend(loc='best', fontsize=10, frameon=False)
-
+        
             ### Kramers-Kronig Relative Residuals    
             for i in range(len(self.df)):
                 ax2.plot(np.log10(self.df[i].f), self.KK_rr_re[i]*100, color=colors_real[i+1], marker='D', ls='--', ms=6, alpha=.7, label=self.label_re_1[i])
@@ -714,6 +668,7 @@ class mpt_data:
                 self.KK_rr_im_max = np.max(self.KK_rr_im)
                 self.KK_rr_re_min = np.min(self.KK_rr_re)
                 self.KK_rr_re_max = np.max(self.KK_rr_re)
+
                 if self.KK_rr_re_max > self.KK_rr_im_max:
                     self.KK_ymax = self.KK_rr_re_max
                 else:
@@ -1918,56 +1873,157 @@ class mpt_data:
         #Call to the fitting function given by PyEIS
         self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
         
-        #maybe take a look at the plots,may help for accuracy, don't really need it...
-        #mpt_data.EIS_plot(fitting = 'on')
-        
-        
-        #print out the values
-        #print(mpt_data.fit_Rs)
-        #print()
-        #print(mpt_data.fit_R)
-        #print(mpt_data.fit_n)
-        #print(mpt_data.fit_fs)
-        #print()
-        #print(mpt_data.fit_R2)
-        #print(mpt_data.fit_n2)
-        #print(mpt_data.fit_fs2)
-        
         #export the new guess package
         guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
         return guess_package
 
     #THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
     #IF THIS DOESN'T RETURN TRUE, WE RUN THE GUESSER UNTIL IT DOES
+    #ITERATIVE GUESSER
+    #Note:Sometimes the graph just may not be able to get a perfect fit, so 
+    #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
+    def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess, threshold = 1e-10):
+        self.counter = 0
+        self.counter += 1
+        self.threshold = threshold
+        print("ITERATION NO: ", self.counter)
+        guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
+        new_guess =self.guess(guess_package)
+        while not self.thresh_verif(guess_package, new_guess):
+            guess_package = new_guess
+            self.counter += 1
+            new_guess = self.guess(new_guess)
+            print("ITERATION NO: ", self.counter)
+            #print(new_guess)
+            if self.counter == 1000:
+                return new_guess
+        return new_guess
+
+
     def thresh_verif(self, before, after):
         try:
-            total = 0
+            self.error_total = 0
             for i in range(len(before)):
-                total += (before[i] - after[i])
-            print(total)    
-            return abs(total) <= 1e-10
+                self.error_total += (before[i] - after[i])
+            print('total error: ', self.error_total)    
+            return abs(self.error_total) <= self.threshold
         except IndexError as e:
             #IF LISTS AREN'T THE SAME LENGTH
             print("Lists are not the same length")
             return
 
 
-    #ITERATIVE GUESSER
-    #Note:Sometimes the graph just may not be able to get a perfect fit, so 
-    #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
-    def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess):
-        guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
-        new_guess =self.guess(guess_package)
-        counter = 0
-        while not self.thresh_verif(guess_package, new_guess):
-            guess_package = new_guess
-            new_guess = self.guess(new_guess)
-            print("ITERATION NO: ", counter)
-            counter += 1
-            print(new_guess)
-            if counter == 5000:
-                return new_guess
-        return new_guess
+    def masker(self,number = 1):
+
+        num_RC='auto' 
+        legend='on'
+        plot='residuals'
+        bode='off'
+        nyq_xlim='none'
+        nyq_ylim='none'
+        weight_func='Boukamp'
+
+
+        
+        print('cycle || No. RC-elements ||   u')
+        self.decade = []
+        self.Rparam = []
+        self.t_const = []
+        self.Lin_KK_Fit = []
+        self.R_names = []
+        self.KK_R0 = []
+        self.KK_R = []
+        self.number_RC = []
+        self.number_RC_sort = []
+
+        self.KK_u = []
+        self.KK_Rgreater = []
+        self.KK_Rminor = []
+        M = 2
+        for i in range(len(self.df)):
+            self.decade.append(np.log10(np.max(self.df[i].f))-np.log10(np.min(self.df[i].f))) #determine the number of RC circuits based on the number of decades measured and num_RC
+            self.number_RC.append(M)
+            self.number_RC_sort.append(M) #needed for self.KK_R
+            self.Rparam.append(KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[0]) #Creates intial guesses for R's
+            self.t_const.append(KK_timeconst(w=self.df[i].w, num_RC=int(self.number_RC[i]))) #Creates time constants values for self.number_RC -(RC)- circuits
+            
+            self.Lin_KK_Fit.append(minimize(KK_errorfunc, self.Rparam[i], method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, self.number_RC[i], weight_func, self.t_const[i]) )) #maxfev=99
+            self.R_names.append(KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[1]) #creates R names
+            for j in range(len(self.R_names[i])):
+                self.KK_R0.append(self.Lin_KK_Fit[i].params.get(self.R_names[i][j]).value)
+        self.number_RC_sort.insert(0,0) #needed for self.KK_R
+        for i in range(len(self.df)):
+            self.KK_R.append(self.KK_R0[int(np.cumsum(self.number_RC_sort)[i]):int(np.cumsum(self.number_RC_sort)[i+1])]) #assigns resistances from each spectra to their respective df
+            self.KK_Rgreater.append(np.where(np.array(self.KK_R)[i] >= 0, np.array(self.KK_R)[i], 0) )
+            self.KK_Rminor.append(np.where(np.array(self.KK_R)[i] < 0, np.array(self.KK_R)[i], 0) )
+            self.KK_u.append(1-(np.abs(np.sum(self.KK_Rminor[i]))/np.abs(np.sum(self.KK_Rgreater[i]))))
+
+        for i in range(len(self.df)):
+            while self.KK_u[i] <= 0.75 or self.KK_u[i] >= 0.88:
+                self.number_RC_sort0 = []
+                self.KK_R_lim = []
+                self.number_RC[i] = self.number_RC[i] + 1
+                self.number_RC_sort0.append(self.number_RC)
+                self.number_RC_sort = np.insert(self.number_RC_sort0, 0,0)
+                self.Rparam[i] = KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[0] #Creates intial guesses for R's
+                self.t_const[i] = KK_timeconst(w=self.df[i].w, num_RC=int(self.number_RC[i])) #Creates time constants values for self.number_RC -(RC)- circuits
+                self.Lin_KK_Fit[i] = minimize(KK_errorfunc, self.Rparam[i], method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, self.number_RC[i], weight_func, self.t_const[i]) ) #maxfev=99
+                self.R_names[i] = KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[1] #creates R names
+                self.KK_R0 = np.delete(np.array(self.KK_R0), np.s_[0:len(self.KK_R0)])
+                self.KK_R0 = []
+                for q in range(len(self.df)):
+                    for j in range(len(self.R_names[q])):
+                        self.KK_R0.append(self.Lin_KK_Fit[q].params.get(self.R_names[q][j]).value)
+                self.KK_R_lim = np.cumsum(self.number_RC_sort) #used for KK_R[i]
+
+                self.KK_R[i] = self.KK_R0[self.KK_R_lim[i]:self.KK_R_lim[i+1]] #assigns resistances from each spectra to their respective df
+                self.KK_Rgreater[i] = np.where(np.array(self.KK_R[i]) >= 0, np.array(self.KK_R[i]), 0)
+                self.KK_Rminor[i] = np.where(np.array(self.KK_R[i]) < 0, np.array(self.KK_R[i]), 0)
+                self.KK_u[i] = 1-(np.abs(np.sum(self.KK_Rminor[i]))/np.abs(np.sum(self.KK_Rgreater[i])))
+            else:
+                print('['+str(i+1)+']'+'            '+str(self.number_RC[i]),'           '+str(np.round(self.KK_u[i],2)))
+
+        self.KK_circuit_fit = []
+        self.KK_rr_re = []
+        self.KK_rr_im = []
+        functs = []
+        for i in range(2,81):
+            functs.append('KK_RC'+str(i))
+
+        for i in range(len(self.df)):
+            cir_num = int(self.number_RC[i])
+            cir_funct = eval(functs[cir_num - 2])
+            self.KK_circuit_fit.append(cir_funct(w=self.df[0].w, Rs=self.Lin_KK_Fit[0].params.get('Rs').value, R_values=self.KK_R[0], t_values=self.t_const[0]))
+            if cir_num >= 81:
+                print('RC simulation circuit not defined')
+                print('   Number of RC = ', self.number_RC)
+            self.KK_rr_re.append(residual_real(re=self.df[i].re, fit_re=self.KK_circuit_fit[i].real, fit_im=-self.KK_circuit_fit[i].imag)) #relative residuals for the real part
+            self.KK_rr_im.append(residual_imag(im=self.df[i].im, fit_re=self.KK_circuit_fit[i].real, fit_im=-self.KK_circuit_fit[i].imag)) #relative residuals for the imag part
+
+
+
+        self.kk_df = pd.DataFrame({'f':np.log10(self.df_raw.f), 're':self.KK_rr_re[0]*100, 'im':self.KK_rr_im[0]*100})
+        self.kk_df['difference'] = abs(self.kk_df['re'] - self.kk_df['im'])
+        diff_mean = self.kk_df['difference'].mean()
+        masked_df = self.kk_df[self.kk_df['difference'] < diff_mean * number]
+        print('MASK BOUNDARIES: ', 10**masked_df['f'].max(),10**masked_df['f'].min())
+        masked_mpt = mpt_data(self.path, self.data, mask = [10**masked_df['f'].max(),10**masked_df['f'].min()])
+        
+        Rs_guess = 40
+
+        R_guess = 2959
+        n_guess = 0.8
+        fs_guess = 23023
+
+        R2_guess = 258738
+        n2_guess = 0.8
+        fs2_guess = 0.2
+        
+        fit_guess = masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
+        if masked_mpt.counter >= 950 or abs(masked_mpt.error_total) > 1e-10:
+            return masked_mpt.masker(number * .9)
+        return (10**masked_df['f'].max(),10**masked_df['f'].min())
+
 
 def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
     '''
@@ -2105,3 +2161,20 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
         n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
         
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+
+#Fully Automated Process
+def full_auto(path,data):
+    ex_mpt = mpt_data(path,data)
+    masked_mpt = mpt_data(path,data, mask = [ex_mpt.masker()[0], ex_mpt.masker()[1]])
+
+    Rs_guess = 1
+
+    R_guess = 1
+    n_guess = 0.8
+    fs_guess = 1
+
+    R2_guess = 1
+    n2_guess = 0.8
+    fs2_guess = 1
+
+    return masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)

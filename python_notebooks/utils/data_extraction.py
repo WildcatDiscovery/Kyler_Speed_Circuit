@@ -72,6 +72,7 @@ def extract_solar(path, EIS_name):
     return data
 
 
+#TAKEN FROM PYEIS LIBRARY
 def correct_text_EIS(text_header):
     '''Corrects the text of '*.mpt' and '*.dta' files into readable parameters without spaces, ., or /
     
