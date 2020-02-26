@@ -10,7 +10,7 @@ Now that we imported our data, we can start visualizing it to better understand 
 ex_mpt.mpt_plot()
 ```
 
-![](.gitbook/assets/image%20%288%29.png)
+![](.gitbook/assets/image%20%2816%29.png)
 
 ## Graph Dimensions
 
@@ -46,7 +46,7 @@ There are also two attributes in mpt\_plot\(\) that can be called after the fitt
 ex_mpt.mpt_plot(fitting = 'on', rr = 'on')
 ```
 
-![The top graph shows a fitted graph, and the bottom graph shows the residuals](.gitbook/assets/image%20%283%29.png)
+![The top graph shows a fitted graph, and the bottom graph shows the residuals](.gitbook/assets/image%20%284%29.png)
 
 
 

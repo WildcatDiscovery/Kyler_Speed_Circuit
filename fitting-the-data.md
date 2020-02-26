@@ -8,11 +8,11 @@ description: >-
 
 In a nutshell, the fitting process is an iterator, which takes in an initial set of arbitrary values, and tries different guesses out and picks the one with the lowest error. It then returns the corresponding set of coefficients. That set of coefficients can go one of two ways: it can either satisfy the threshold, which would entail that there is a combined error of less than 1e-10, or not satisfy the threshold, in which case it would be inserted back into the iterator to create a new set of coefficients.
 
-![Basic flowchart of our iteration process](.gitbook/assets/image%20%285%29.png)
+![Basic flowchart of our iteration process](.gitbook/assets/image%20%287%29.png)
 
 This process would run until the threshold is achieved, or if this threshold is run 1000 times, the result at the end of the 1000th iteration would be it's final result. 
 
-![Initial guesses from the introduction and the results will follow below](.gitbook/assets/image%20%2812%29.png)
+![Initial guesses from the introduction and the results will follow below](.gitbook/assets/image%20%2822%29.png)
 
 ```text
 [[Fit Statistics]]
