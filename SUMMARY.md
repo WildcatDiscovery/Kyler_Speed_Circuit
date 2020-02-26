@@ -7,4 +7,5 @@
 * [Fitting the Data](fitting-the-data.md)
 * [Masking the Data](masking-the-data.md)
 * [Automated Process](automated-process.md)
+* [Documentation](documentation.md)
 
