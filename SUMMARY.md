@@ -1,6 +1,7 @@
 # Table of contents
 
 * [README](README.md)
+* [Setup](setup.md)
 * [Introduction](introduction.md)
 * [Importing the Data](importing-the-data.md)
 * [Plotting the Data](plotting-the-data.md)

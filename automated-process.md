@@ -31,5 +31,5 @@ def full_auto(path,data):
 full_auto(r"C:\Users\cjang\Desktop\\", ['DE_40_1_30.mpt'])
 ```
 
-![](.gitbook/assets/image%20%2816%29.png)
+![](.gitbook/assets/image%20%2822%29.png)
 

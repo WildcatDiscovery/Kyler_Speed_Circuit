@@ -6,7 +6,7 @@ description: >-
 
 # Masking the Data
 
-Even on a good dataset, we can get a big error if we take into consideration every single frequency of data. Take for example, '_DE\_40\_1\_30.mpt_' which by all accounts, is a good dataset without any unusual spikes or drops in the data. Let's take a look at if we were to import all frequencies in the file.
+Even on a good dataset, we can get a sizable error if we take into consideration every single frequency of data. This is because there can be some data that is considered an outlier. Take for example, '_DE\_40\_1\_30.mpt_' which by all accounts, is a good dataset without any unusual spikes or drops in the data. Let's take a look at if we were to import all frequencies in the file.
 
 ```text
 path=r"C:\Users\cjang\Desktop\\"
@@ -15,7 +15,7 @@ ex_mpt = mpt_data(path,data)
 ex_mpt.mpt_plot()
 ```
 
-![There&apos;s a lot of points on here!](.gitbook/assets/image%20%2813%29.png)
+![There&apos;s a lot of points on here!](.gitbook/assets/image%20%2819%29.png)
 
 If we take the guessing iterator and run it on this dataset, the guessing iterator has to find a fitting equation that satisfies every single point on this set, or something that is close.
 
@@ -33,33 +33,33 @@ fs2_guess = 0.2
 ex_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
 ```
 
-![](.gitbook/assets/image%20%2811%29.png)
+![](.gitbook/assets/image%20%2817%29.png)
 
-![](.gitbook/assets/image%20%2824%29.png)
+![](.gitbook/assets/image%20%2835%29.png)
 
-![The iterator reached the limit of a thousand iterations without satisfying its threshold of 1e-10.](.gitbook/assets/image%20%2821%29.png)
+![The iterator reached the limit of a thousand iterations without satisfying its threshold of 1e-10.](.gitbook/assets/image%20%2828%29.png)
 
-If we graph this 'optimal' set of coefficients, we aren't guaranteed a great fitting graph...
+Because the iterator cut out at 1000 iterations and return the set of coefficients at that state, we cannot say with full confidence that this is the best fit because it didn't necessarily satisfy the threshold. If we graph this 'optimal' set of coefficients, we aren't guaranteed a great fitting graph...
 
 ```text
 ex_mpt.set_new_gph_dims(8,8)
 ex_mpt.mpt_plot(fitting = 'on', x_window = [0,5000], y_window = [0,5000])
 ```
 
-![We can do better](.gitbook/assets/image%20%2812%29.png)
+![Because we took all frequencies, our graph had to account for all the bad points in the graph.](.gitbook/assets/image%20%2818%29.png)
 
-What we can do is eliminate some of the frequencies from the file to make it easier to get a more accurate graph. But how do we determine which frequencies to drop from the file?
+What we can do is eliminate some of the frequencies from the file to make it easier to get a more accurate graph. But how do we determine which frequencies to drop from the file? 
 
 ## Linear Kramer Kronig Analysis
 
-Running the function **ex\_mpt.LinKK\(\)** will allow you to see where your residuals are fluctuating the most. From here you can determine on your own what your boundaries should be.
+The Linear Kramer Kronig Analysis determines the causality, linearity, and stability of the dataset. It'll help you determine a mask by examining the residual graph. Running the function **ex\_mpt.LinKK\(\)** will allow you to see where your residuals are fluctuating the most. From here you can determine on your own what your boundaries should be.
 
 ```text
 #Will be updated
 ex_mpt.Lin_KK(plot = 'w_data')
 ```
 
-![It seems like our residuals stabilize from 1.75 to 6 on the x-axis. We can use this for boundaries!](.gitbook/assets/image%20%288%29.png)
+![It seems like our residuals stabilize from 1.75 to 6 on the x-axis. We can use this for boundaries!](.gitbook/assets/image%20%2814%29.png)
 
 ```text
 #Notice how the graph shows log(f) not f. We must translate back
@@ -69,7 +69,7 @@ masked_mpt.set_new_gph_dims(8,8)
 masked_mpt.mpt_plot()
 ```
 
-![This is much better!](.gitbook/assets/image%20%2817%29.png)
+![This is much better!](.gitbook/assets/image%20%2823%29.png)
 
 We can then fit this graph with our guessing iterator!
 
@@ -88,7 +88,7 @@ fs2_guess = 0.2
 masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
 ```
 
-![Within 7 iterations, we achieved threshold verification!](.gitbook/assets/image%20%2815%29.png)
+![Within 7 iterations, we achieved threshold verification!](.gitbook/assets/image%20%2821%29.png)
 
 ## Automated Masker
 
@@ -101,7 +101,7 @@ Calling masker takes the average of the distance between the residuals and uses 
 ex_mpt.masker()
 ```
 
-![The two numbers on the bottom provide an optimal mask. We now plug that into a separate mpt object](.gitbook/assets/image%20%286%29.png)
+![The two numbers on the bottom provide an optimal mask. We now plug that into a separate mpt object](.gitbook/assets/image%20%2812%29.png)
 
 ```text
 masked_mpt = mpt_data(path,data, mask = [1000018.6000000008, 39.80892199999999])
@@ -119,7 +119,7 @@ fs2_guess = 0.2
 masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
 ```
 
-![The ideal mask works! 2 iterations!](.gitbook/assets/image%20%285%29.png)
+![The ideal mask works! 2 iterations!](.gitbook/assets/image%20%2811%29.png)
 
-Note that there are multiple combinations of values that can yield the same error result
+Note that there are varying amounts of iteration for convergence, you may take longer to achieve threshold
 
