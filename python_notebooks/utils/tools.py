@@ -226,8 +226,7 @@ class mpt_data:
         self.fit_E = []
         for i in range(len(self.df)):
             self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
-            if see_stats == 'on':
-                print(report_fit(self.Fit[i]))
+            if see_stats == 'on':print(report_fit(self.Fit[i]))
             self.fit_E.append(np.average(self.df[i].E_avg))
         assert circuit == 'R-RQ-RQ'
         self.fit_Rs = []
@@ -1853,7 +1852,7 @@ class mpt_data:
                     fig.savefig(savefig)
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
-
+    #SINGLE GUESS ITERATION
     def guess(self, guess_package):
         
         #SINGLE ITERATION OF THE GUESS PROCESS
@@ -1875,7 +1874,7 @@ class mpt_data:
         self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
         
         #export the new guess package
-        guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
+        guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
         return guess_package
 
     #THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
@@ -1900,7 +1899,7 @@ class mpt_data:
                 return new_guess
         return new_guess
 
-
+    #Threshold verification function to determine true or false on the guessing iterator
     def thresh_verif(self, before, after):
         try:
             self.error_total = 0
@@ -1913,8 +1912,8 @@ class mpt_data:
             print("Lists are not the same length")
             return
 
-
-    def masker(self,number = 1):
+    #Automated Masking Process
+    def auto_mask(self,number = 1):
 
         num_RC='auto' 
         legend='on'
@@ -2022,9 +2021,11 @@ class mpt_data:
         
         fit_guess = masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
         if masked_mpt.counter >= 950 or abs(masked_mpt.error_total) > 1e-10:
-            return masked_mpt.masker(number * .9)
+            return masked_mpt.auto_mask(number * .9)
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
-
+    #Manual Masking Process
+    def manual_mask(self, upper_limit, lower_limit):
+        return mpt_data(self.path,self.data, mask = [upper_limit, lower_limit])
 
 def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
     '''
@@ -2166,7 +2167,7 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
 #Fully Automated Process
 def full_auto(path,data):
     ex_mpt = mpt_data(path,data)
-    masked_mpt = mpt_data(path,data, mask = [ex_mpt.masker()[0], ex_mpt.masker()[1]])
+    masked_mpt = mpt_data(path,data, mask = [ex_mpt.auto_mask()[0], ex_mpt.auto_mask()[1]])
 
     Rs_guess = 1
 
