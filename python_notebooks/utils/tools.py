@@ -220,13 +220,14 @@ class mpt_data:
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
         
     #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
-    def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
+    def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise', see_stats = 'off'):
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
         for i in range(len(self.df)):
             self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
-            print(report_fit(self.Fit[i]))
+            if see_stats == 'on':
+                print(report_fit(self.Fit[i]))
             self.fit_E.append(np.average(self.df[i].E_avg))
         assert circuit == 'R-RQ-RQ'
         self.fit_Rs = []
