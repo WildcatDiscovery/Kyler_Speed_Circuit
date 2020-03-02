@@ -1877,6 +1877,7 @@ class mpt_data:
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
 
+   
     #Updated Guesser
     def guesser(ex_mpt, Rs_guess = 1, R_guess = 1, n_guess = 0.8, fs_guess = 1, R2_guess = 1, n2_guess = 0.8, fs2_guess = 0.2):
         
@@ -1894,7 +1895,7 @@ class mpt_data:
 
         counter = 0
 
-        while ex_mpt.low_error >= 1 or counter >= 100:
+        while ex_mpt.low_error >= 1 and counter <= 100:
             counter += 1
             print('COUNTER: ', counter)
             tyn = [ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_fs[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_fs2[0]]
