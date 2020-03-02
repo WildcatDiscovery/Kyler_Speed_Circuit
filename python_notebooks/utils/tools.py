@@ -223,14 +223,11 @@ class mpt_data:
         
     #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
+        assert circuit == 'R-RQ-RQ'
+
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
-        for i in range(len(self.df)):
-            self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
-            print(report_fit(self.Fit[i]))
-            self.fit_E.append(np.average(self.df[i].E_avg))
-        assert circuit == 'R-RQ-RQ'
         self.fit_Rs = []
         self.fit_R = []
         self.fit_n = []
@@ -240,6 +237,13 @@ class mpt_data:
         self.fit_fs2 = []
         self.fit_Q = []
         self.fit_Q2 = []
+
+        for i in range(len(self.df)):
+            self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
+            print(report_fit(self.Fit[i]))
+            self.fit_E.append(np.average(self.df[i].E_avg))
+        
+        
         for i in range(len(self.df)):
             if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()):
                 self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value))
@@ -1897,18 +1901,16 @@ class mpt_data:
 
         while ex_mpt.low_error >= 1 and counter <= 100:
             counter += 1
-            print('COUNTER: ', counter)
-            tyn = [ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_fs[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_fs2[0]]
-            print(tyn)
-            Rs_guess = tyn[0]
+            print('ITERATION NO. : ', counter)
+            Rs_guess = ex_mpt.fit_Rs[0]
 
-            R_guess = tyn[1]
-            n_guess = tyn[2]
-            fs_guess = tyn[3]
+            R_guess = ex_mpt.fit_R[0]
+            n_guess = ex_mpt.fit_n[0]
+            fs_guess = ex_mpt.fit_fs[0]
 
-            R2_guess = tyn[4]
-            n2_guess = tyn[5]
-            fs2_guess = tyn[6]     
+            R2_guess = ex_mpt.fit_R2[0]
+            n2_guess = ex_mpt.fit_n2[0]
+            fs2_guess = ex_mpt.fit_fs2[0]
 
             guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
             #adding to the parameters package to send to the fitting function
