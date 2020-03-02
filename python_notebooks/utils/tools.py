@@ -225,7 +225,7 @@ class mpt_data:
         self.circuit_fit = []
         self.fit_E = []
         for i in range(len(self.df)):
-            self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
+            self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
             print(report_fit(self.Fit[i]))
             self.fit_E.append(np.average(self.df[i].E_avg))
         assert circuit == 'R-RQ-RQ'
@@ -253,6 +253,27 @@ class mpt_data:
             else:
                 print("Circuit Error, check inputs")
                 break
+
+    def leastsq_errorfunc(self, params, w, re, im, circuit, weight_func):
+        re_fit = cir_RsRQRQ_fit(params, w).real
+        im_fit = -cir_RsRQRQ_fit(params, w).imag
+        error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
+        print(sum(error))
+        #Different Weighing options, see Lasia
+        if weight_func == 'modulus':
+            weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
+        elif weight_func == 'proportional':
+            weight = [1/(re_fit**2), 1/(im_fit**2)]
+        elif weight_func == 'unity':
+            unity_1s = []
+            for k in range(len(re)):
+                unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squres.
+            weight = [unity_1s, unity_1s]
+        else:
+            print('weight not defined in leastsq_errorfunc()')
+            
+        S = np.array(weight) * error #weighted sum of squares 
+        return S
         
     #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
@@ -1905,7 +1926,7 @@ class mpt_data:
             self.error_total = 0
             for i in range(len(before)):
                 self.error_total += (before[i] - after[i])
-            print('total error: ', self.error_total)    
+            #print('total error: ', self.error_total)    
             return abs(self.error_total) <= self.threshold
         except IndexError as e:
             #IF LISTS AREN'T THE SAME LENGTH
@@ -2025,54 +2046,7 @@ class mpt_data:
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
 
 
-def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
-    '''
-    Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
-    until the total sum of errors is minimized.
-    
-    During the minimization the fit is weighed, and currently three different weigh options are avaliable:
-        - modulus
-        - unity
-        - proportional
-    
-    Modulus is generially recommended as random errors and a bias can exist in the experimental data.
-        
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
 
-    Inputs
-    ------------
-    - params: parameters needed for CNLS
-    - re: real impedance
-    - im: Imaginary impedance
-    - weight_func
-      Weight function
-        - modulus
-        - unity
-        - proportional
-    '''
-    if circuit == 'R-RQ-RQ':
-        re_fit = cir_RsRQRQ_fit(params, w).real
-        im_fit = -cir_RsRQRQ_fit(params, w).imag
-    else:
-        print('Circuit is not defined in leastsq_errorfunc()')
-        
-    error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
-    
-    #Different Weighing options, see Lasia
-    if weight_func == 'modulus':
-        weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
-    elif weight_func == 'proportional':
-        weight = [1/(re_fit**2), 1/(im_fit**2)]
-    elif weight_func == 'unity':
-        unity_1s = []
-        for k in range(len(re)):
-            unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squres.
-        weight = [unity_1s, unity_1s]
-    else:
-        print('weight not defined in leastsq_errorfunc()')
-        
-    S = np.array(weight) * error #weighted sum of squares 
-    return S
 
 def cir_RsRQRQ_fit(params, w):
     '''
