@@ -259,6 +259,7 @@ class mpt_data:
         im_fit = -cir_RsRQRQ_fit(params, w).imag
         error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
         print(sum(error))
+        self.low_error = sum(error)
         #Different Weighing options, see Lasia
         if weight_func == 'modulus':
             weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
@@ -1903,8 +1904,8 @@ class mpt_data:
     #ITERATIVE GUESSER
     #Note:Sometimes the graph just may not be able to get a perfect fit, so 
     #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
+    self.counter = 0
     def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess, threshold = 1e-10):
-        self.counter = 0
         self.counter += 1
         self.threshold = threshold
         print("ITERATION NO: ", self.counter)
