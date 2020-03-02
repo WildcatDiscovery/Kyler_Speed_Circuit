@@ -44,6 +44,8 @@ class mpt_data:
         self.df_raw0 = []
         self.cycleno = []
         self.mask = mask
+        self.counter = 0
+        self.low_error = 0
         for j in range(len(data)):
             if data[j].find(".mpt") != -1: #file is a .mpt file
                 self.df_raw0.append(extract_mpt(path=path, EIS_name=data[j])) #reads all datafiles
@@ -1904,9 +1906,9 @@ class mpt_data:
     #ITERATIVE GUESSER
     #Note:Sometimes the graph just may not be able to get a perfect fit, so 
     #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
-    self.counter = 0
+    #self.counter = 0
     def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess, threshold = 1e-10):
-        self.counter += 1
+        #self.counter += 1
         self.threshold = threshold
         print("ITERATION NO: ", self.counter)
         guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
