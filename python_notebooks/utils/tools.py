@@ -1917,10 +1917,10 @@ class mpt_data:
             params = Parameters()
             params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
             params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
-            params.add('n', value=guess_package[2], min=.65, max=1.2)
+            params.add('n', value=guess_package[2], min=.65, max=1)
             params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
             params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
-            params.add('n2', value=guess_package[5], min=.65, max=1.2)
+            params.add('n2', value=guess_package[5], min=.65, max=1)
             params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
             ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
             
