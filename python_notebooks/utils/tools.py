@@ -1899,7 +1899,7 @@ class mpt_data:
 
         counter = 0
 
-        while ex_mpt.low_error >= 1 and counter <= 1000:
+        while ex_mpt.low_error >= 10 and counter <= 1000:
             counter += 1
             print('ITERATION NO. : ', counter)
             Rs_guess = ex_mpt.fit_Rs[0]
