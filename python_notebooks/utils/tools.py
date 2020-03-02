@@ -1877,64 +1877,51 @@ class mpt_data:
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
 
-    def guess(self, guess_package):
-        
-        #SINGLE ITERATION OF THE GUESS PROCESS
-        #USE THIS FUNCTION TO GET CLOSER TO THE IDEAL COEFFICIENTS FOR Rs, R, n, fs, R2, n2, fs2
-        #REPEAT THIS FUNCTION UNTIL THE THRESHOLD IS ACHEIVED
+    #Updated Guesser
+    def guesser(ex_mpt, Rs_guess = 1, R_guess = 1, n_guess = 0.8, fs_guess = 1, R2_guess = 1, n2_guess = 0.8, fs2_guess = 0.2):
         
         params = Parameters()
-        
-        #adding to the parameters package to send to the fitting function
-        params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
-        params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
-        params.add('n', value=guess_package[2], min=.65, max=1.2)
-        params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
-        params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
-        params.add('n2', value=guess_package[5], min=.65, max=1.2)
-        params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
-        
-        #Call to the fitting function given by PyEIS
-        self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
-        
-        #export the new guess package
-        guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
-        return guess_package
-
-    #THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
-    #IF THIS DOESN'T RETURN TRUE, WE RUN THE GUESSER UNTIL IT DOES
-    #ITERATIVE GUESSER
-    #Note:Sometimes the graph just may not be able to get a perfect fit, so 
-    #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
-    #self.counter = 0
-    def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess, threshold = 1e-10):
-        #self.counter += 1
-        self.threshold = threshold
-        print("ITERATION NO: ", self.counter)
         guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
-        new_guess =self.guess(guess_package)
-        while not self.thresh_verif(guess_package, new_guess):
-            guess_package = new_guess
-            self.counter += 1
-            new_guess = self.guess(new_guess)
-            print("ITERATION NO: ", self.counter)
-            #print(new_guess)
-            if self.counter == 1000:
-                return new_guess
-        return new_guess
+        #adding to the parameters package to send to the fitting function
+        params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=10**6)
+        params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=10**6)
+        params.add('n', value=guess_package[2], min=.65, max=1)
+        params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
+        params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=10**6)
+        params.add('n2', value=guess_package[5], min=.65, max=1)
+        params.add('fs2', value=guess_package[6], min=10**-2, max=10**6)
+        ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
 
+        counter = 0
 
-    def thresh_verif(self, before, after):
-        try:
-            self.error_total = 0
-            for i in range(len(before)):
-                self.error_total += (before[i] - after[i])
-            #print('total error: ', self.error_total)    
-            return abs(self.error_total) <= self.threshold
-        except IndexError as e:
-            #IF LISTS AREN'T THE SAME LENGTH
-            print("Lists are not the same length")
-            return
+        while ex_mpt.low_error >= 1 or counter >= 100:
+            counter += 1
+            print('COUNTER: ', counter)
+            tyn = [ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_fs[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_fs2[0]]
+            print(tyn)
+            Rs_guess = tyn[0]
+
+            R_guess = tyn[1]
+            n_guess = tyn[2]
+            fs_guess = tyn[3]
+
+            R2_guess = tyn[4]
+            n2_guess = tyn[5]
+            fs2_guess = tyn[6]     
+
+            guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
+            #adding to the parameters package to send to the fitting function
+            params = Parameters()
+            params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
+            params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
+            params.add('n', value=guess_package[2], min=.65, max=1.2)
+            params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
+            params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
+            params.add('n2', value=guess_package[5], min=.65, max=1.2)
+            params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
+            ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
+            
+        ex_mpt.mpt_plot(fitting = 'on')
 
 
     def masker(self,number = 1):
