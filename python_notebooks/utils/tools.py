@@ -220,13 +220,13 @@ class mpt_data:
                 ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
         
     #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
-    def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise', see_stats = 'off'):
+    def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
         for i in range(len(self.df)):
-            self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
-            if see_stats == 'on':print(report_fit(self.Fit[i]))
+            self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
+            print(report_fit(self.Fit[i]))
             self.fit_E.append(np.average(self.df[i].E_avg))
         assert circuit == 'R-RQ-RQ'
         self.fit_Rs = []
@@ -253,6 +253,27 @@ class mpt_data:
             else:
                 print("Circuit Error, check inputs")
                 break
+
+    def leastsq_errorfunc(self, params, w, re, im, circuit, weight_func):
+        re_fit = cir_RsRQRQ_fit(params, w).real
+        im_fit = -cir_RsRQRQ_fit(params, w).imag
+        error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
+        print(sum(error))
+        #Different Weighing options, see Lasia
+        if weight_func == 'modulus':
+            weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
+        elif weight_func == 'proportional':
+            weight = [1/(re_fit**2), 1/(im_fit**2)]
+        elif weight_func == 'unity':
+            unity_1s = []
+            for k in range(len(re)):
+                unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squres.
+            weight = [unity_1s, unity_1s]
+        else:
+            print('weight not defined in leastsq_errorfunc()')
+            
+        S = np.array(weight) * error #weighted sum of squares 
+        return S
         
     #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
@@ -1852,7 +1873,7 @@ class mpt_data:
                     fig.savefig(savefig)
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
-    #SINGLE GUESS ITERATION
+
     def guess(self, guess_package):
         
         #SINGLE ITERATION OF THE GUESS PROCESS
@@ -1874,7 +1895,7 @@ class mpt_data:
         self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
         
         #export the new guess package
-        guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
+        guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
         return guess_package
 
     #THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
@@ -1899,21 +1920,21 @@ class mpt_data:
                 return new_guess
         return new_guess
 
-    #Threshold verification function to determine true or false on the guessing iterator
+
     def thresh_verif(self, before, after):
         try:
             self.error_total = 0
             for i in range(len(before)):
                 self.error_total += (before[i] - after[i])
-            print('total error: ', self.error_total)    
+            #print('total error: ', self.error_total)    
             return abs(self.error_total) <= self.threshold
         except IndexError as e:
             #IF LISTS AREN'T THE SAME LENGTH
             print("Lists are not the same length")
             return
 
-    #Automated Masking Process
-    def auto_mask(self,number = 1):
+
+    def masker(self,number = 1):
 
         num_RC='auto' 
         legend='on'
@@ -2021,60 +2042,11 @@ class mpt_data:
         
         fit_guess = masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
         if masked_mpt.counter >= 950 or abs(masked_mpt.error_total) > 1e-10:
-            return masked_mpt.auto_mask(number * .9)
+            return masked_mpt.masker(number * .9)
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
-    #Manual Masking Process
-    def manual_mask(self, upper_limit, lower_limit):
-        return mpt_data(self.path,self.data, mask = [upper_limit, lower_limit])
 
-def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
-    '''
-    Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
-    until the total sum of errors is minimized.
-    
-    During the minimization the fit is weighed, and currently three different weigh options are avaliable:
-        - modulus
-        - unity
-        - proportional
-    
-    Modulus is generially recommended as random errors and a bias can exist in the experimental data.
-        
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
 
-    Inputs
-    ------------
-    - params: parameters needed for CNLS
-    - re: real impedance
-    - im: Imaginary impedance
-    - weight_func
-      Weight function
-        - modulus
-        - unity
-        - proportional
-    '''
-    if circuit == 'R-RQ-RQ':
-        re_fit = cir_RsRQRQ_fit(params, w).real
-        im_fit = -cir_RsRQRQ_fit(params, w).imag
-    else:
-        print('Circuit is not defined in leastsq_errorfunc()')
-        
-    error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
-    
-    #Different Weighing options, see Lasia
-    if weight_func == 'modulus':
-        weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
-    elif weight_func == 'proportional':
-        weight = [1/(re_fit**2), 1/(im_fit**2)]
-    elif weight_func == 'unity':
-        unity_1s = []
-        for k in range(len(re)):
-            unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squres.
-        weight = [unity_1s, unity_1s]
-    else:
-        print('weight not defined in leastsq_errorfunc()')
-        
-    S = np.array(weight) * error #weighted sum of squares 
-    return S
+
 
 def cir_RsRQRQ_fit(params, w):
     '''
@@ -2167,7 +2139,7 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
 #Fully Automated Process
 def full_auto(path,data):
     ex_mpt = mpt_data(path,data)
-    masked_mpt = mpt_data(path,data, mask = [ex_mpt.auto_mask()[0], ex_mpt.auto_mask()[1]])
+    masked_mpt = mpt_data(path,data, mask = [ex_mpt.masker()[0], ex_mpt.masker()[1]])
 
     Rs_guess = 1
 
