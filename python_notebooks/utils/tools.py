@@ -1884,7 +1884,7 @@ class mpt_data:
    
     #Updated Guesser
     def guesser(ex_mpt, Rs_guess = 1, R_guess = 1, n_guess = 0.8, fs_guess = 1, R2_guess = 1, n2_guess = 0.8, fs2_guess = 0.2):
-        
+    
         params = Parameters()
         guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
         #adding to the parameters package to send to the fitting function
@@ -1899,32 +1899,50 @@ class mpt_data:
 
         counter = 0
 
-        while ex_mpt.low_error >= 10 and counter <= 1000:
-            counter += 1
-            print('ITERATION NO. : ', counter)
-            Rs_guess = ex_mpt.fit_Rs[0]
-
-            R_guess = ex_mpt.fit_R[0]
-            n_guess = ex_mpt.fit_n[0]
-            fs_guess = ex_mpt.fit_fs[0]
-
-            R2_guess = ex_mpt.fit_R2[0]
-            n2_guess = ex_mpt.fit_n2[0]
-            fs2_guess = ex_mpt.fit_fs2[0]
-
-            guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
-            #adding to the parameters package to send to the fitting function
-            params = Parameters()
-            params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
-            params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
-            params.add('n', value=guess_package[2], min=.65, max=1)
-            params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
-            params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
-            params.add('n2', value=guess_package[5], min=.65, max=1)
-            params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
-            ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
+        
+        
+        
+        while ex_mpt.low_error >= 100 and counter <= 1000:
             
+            try:
+                counter += 1
+                print('ITERATION NO. : ', counter)
+                Rs_guess = ex_mpt.fit_Rs[0]
+
+                R_guess = ex_mpt.fit_R[0]
+                n_guess = ex_mpt.fit_n[0]
+                fs_guess = ex_mpt.fit_fs[0]
+
+                R2_guess = ex_mpt.fit_R2[0]
+                n2_guess = ex_mpt.fit_n2[0]
+                fs2_guess = ex_mpt.fit_fs2[0]
+
+                guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
+                #adding to the parameters package to send to the fitting function
+                params = Parameters()
+                params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
+                params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
+                params.add('n', value=guess_package[2], min=.65, max=1)
+                params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
+                params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
+                params.add('n2', value=guess_package[5], min=.65, max=1)
+                params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
+                ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
+
+        
+            except KeyboardInterrupt:
+                print('Interrupted!!')
+                print([ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_Q[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_Q2[0]])
         ex_mpt.mpt_plot(fitting = 'on')
+
+
+    def fast_mask(self):
+        skeleton = self.df_raw.iloc[:,0:3]
+        re_mid, im_mid  = mean(skeleton['re']), mean(skeleton['im'])
+        a = skeleton[abs(skeleton['re']) <= re_avg * .2]
+        b = skeleton[abs(skeleton['im']) <= im_avg * .2]
+        c = pd.concat([a, b]).drop_duplicates()
+        return [c['f'].max(), c['f'].min()]
 
 
     def masker(self,number = 1):
