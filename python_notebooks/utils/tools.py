@@ -12,7 +12,7 @@ from pylab import *
 from scipy.optimize import curve_fit
 import mpmath as mp
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
-#from scipy.optimize import leastsq
+import sys, traceback
 pd.options.mode.chained_assignment = None
 
 #Plotting
