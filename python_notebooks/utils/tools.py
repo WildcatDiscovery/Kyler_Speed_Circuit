@@ -264,7 +264,7 @@ class mpt_data:
         re_fit = cir_RsRQRQ_fit(params, w).real
         im_fit = -cir_RsRQRQ_fit(params, w).imag
         error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
-        print(sum(error))
+        print('ERROR: ', sum(error))
         self.low_error = sum(error)
         #Different Weighing options, see Lasia
         if weight_func == 'modulus':
