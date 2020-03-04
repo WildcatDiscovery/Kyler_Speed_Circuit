@@ -2056,6 +2056,28 @@ class mpt_data:
         if masked_mpt.counter >= 950 or abs(masked_mpt.error_total) > 1e-10:
             return masked_mpt.masker(number * .9)
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
+    
+    def masker(self, num_bins = 5):
+    
+        skeleton = self.df_raw.iloc[:,0:3]
+        re_mid, im_mid  = mean(skeleton['re']), mean(skeleton['im'])
+        a = skeleton[abs(skeleton['re']) <= re_mid * 1.25]
+        b = skeleton[abs(skeleton['im']) <= im_mid * 1.25]
+        c = pd.concat([a, b]).drop_duplicates()
+        for cols in c.columns.tolist()[1:]:
+            c = c.ix[c[cols] > 0]
+
+        res = []
+        ims = []
+        
+        for i in pd.cut(c['re'], num_bins):
+            res.append(i)
+        for i in pd.cut(c['im'], num_bins):
+            ims.append(i)
+
+        d = c[(c['re'] >=stat.mode(res).left) & (c['re'] <= stat.mode(res).right)]
+        f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= stat.mode(ims).right)]
+        return [max(f['f']), min(f['f'])]
 
 
 
