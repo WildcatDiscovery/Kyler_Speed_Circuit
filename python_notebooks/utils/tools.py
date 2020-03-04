@@ -14,6 +14,7 @@ import mpmath as mp
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
 import sys, traceback
 pd.options.mode.chained_assignment = None
+import statistics as stat
 
 #Plotting
 import matplotlib as mpl
