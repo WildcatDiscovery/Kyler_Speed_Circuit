@@ -1902,7 +1902,7 @@ class mpt_data:
         
         
         
-        while ex_mpt.low_error >= 100 and counter <= 1000:
+        while ex_mpt.low_error >= 100 and counter <= 100:
             
             try:
                 counter += 1
