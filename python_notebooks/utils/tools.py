@@ -1894,7 +1894,7 @@ class mpt_data:
 
    
     #Updated Guesser
-    def guesser(ex_mpt, Rs_guess = 1e3, R_guess = 1 , n_guess = 0.8, fs_guess = 1, R2_guess = 100, n2_guess = 0.8, fs2_guess = 0.2, n3_guess = 0.8, fs3_guess = 1):
+    def guesser(self, Rs_guess = 1e3, R_guess = 1 , n_guess = 0.8, fs_guess = 1, R2_guess = 100, n2_guess = 0.8, fs2_guess = 0.2, n3_guess = 0.8, fs3_guess = 1):
 
 
         params = Parameters()
@@ -1908,26 +1908,26 @@ class mpt_data:
         params.add('fs2', value=fs2_guess, min=10**-2, max=10**6)
         params.add('n3', value=n3_guess, min=.65, max=1)
         params.add('fs3', value=fs3_guess, min=10**-2, max=10**6)
-        ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
+        self.mpt_fit(params, circuit = 'R-RQ-RQ')
 
         counter = 0
 
-        while ex_mpt.low_error >= 100 and counter <= 1000:        
+        while self.low_error >= 100 and counter <= 1000:        
             try:
                 counter += 1
                 print('ITERATION NO. : ', counter)
-                Rs_guess = ex_mpt.fit_Rs[0]
+                Rs_guess = self.fit_Rs[0]
 
-                R_guess = ex_mpt.fit_R[0]
-                n_guess = ex_mpt.fit_n[0]
-                fs_guess = ex_mpt.fit_fs[0]
+                R_guess = self.fit_R[0]
+                n_guess = self.fit_n[0]
+                fs_guess = self.fit_fs[0]
 
-                R2_guess = ex_mpt.fit_R2[0]
-                n2_guess = ex_mpt.fit_n2[0]
-                fs2_guess = ex_mpt.fit_fs2[0]
+                R2_guess = self.fit_R2[0]
+                n2_guess = self.fit_n2[0]
+                fs2_guess = self.fit_fs2[0]
 
-                n3_guess = ex_mpt.fit_n3[0]
-                fs3_guess = ex_mpt.fit_fs3[0]
+                n3_guess = self.fit_n3[0]
+                fs3_guess = self.fit_fs3[0]
 
                 guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess, n3_guess, fs3_guess]
                 #adding to the parameters package to send to the fitting function
@@ -1941,13 +1941,13 @@ class mpt_data:
                 params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
                 params.add('n3', value=guess_package[7], min=.65, max=1)
                 params.add('fs3', value=guess_package[8], min=10**-2, max=10**1)
-                ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
+                self.mpt_fit(params, circuit = 'R-RQ-RQ')
 
 
             except KeyboardInterrupt:
                 print('Interrupted!!')
-                #print([ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_Q[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_Q2[0]])
-        ex_mpt.mpt_plot(fitting = 'on')
+                #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
+        self.mpt_plot(fitting = 'on')
 
 
     def fast_mask(self):
@@ -1959,7 +1959,7 @@ class mpt_data:
         return [c['f'].max(), c['f'].min()]
 
 
-    def masker(self,number = 1):
+    def kk_masker(self,number = 1):
 
         num_RC='auto' 
         legend='on'
@@ -2070,16 +2070,14 @@ class mpt_data:
             return masked_mpt.masker(number * .9)
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
     
-    def masker(self, num_bins = 5):
-    
+    def masker0(self, num_bins = 2):
         skeleton = self.df_raw.iloc[:,0:3]
-        re_mid, im_mid  = mean(skeleton['re']), mean(skeleton['im'])
-        a = skeleton[abs(skeleton['re']) <= re_mid * 1.25]
-        b = skeleton[abs(skeleton['im']) <= im_mid * 1.25]
+        re_lim, im_lim  = max(skeleton['re']) * .75, max(skeleton['im'] * .75)
+        a = skeleton[(skeleton['re']) <= re_lim]
+        b = skeleton[(skeleton['im']) <= im_lim]
         c = pd.concat([a, b]).drop_duplicates()
         for cols in c.columns.tolist()[1:]:
             c = c.ix[c[cols] > 0]
-
         res = []
         ims = []
         
@@ -2092,6 +2090,24 @@ class mpt_data:
         f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= stat.mode(ims).right)]
         return [max(f['f']), min(f['f'])]
 
+
+    def masker1(self, num_bins = 3):
+
+        c = self.df_raw.iloc[:,0:3]
+        for cols in c.columns.tolist()[1:]:
+            c = c.ix[c[cols] > 0]
+
+        res = []
+        ims = []
+        
+        for i in pd.cut(c['re'], num_bins):
+            res.append(i)
+        for i in pd.cut(c['im'], num_bins):
+            ims.append(i)
+
+        d = c[(c['re'] >=stat.mode(res).left) & (c['re'] <= stat.mode(res).right * 1.5)]
+        f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= stat.mode(ims).right * 1.5)]
+        return [max(f['f']), min(f['f'])]
 
 
 
