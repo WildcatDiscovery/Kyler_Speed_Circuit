@@ -2178,6 +2178,7 @@ def cir_RsRQRQ_fit(params, w):
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
 
 def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none', Q3 = 'none', fs3 = 'none', n3 = 'none'):
+
     
     if Q == 'none':
         Q = (1/(R*(2*np.pi*fs)**n))
@@ -2192,3 +2193,69 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
     
         
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
+
+
+def full_graphing(path, lst = None):
+    bad_mpts = []
+    if not lst:
+        path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
+        for i in path_files:
+            try:
+                print(i, ' was a permissible file')
+                ex_mpt = mpt_data(path,[i])
+                masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                masked_mpt.set_new_gph_dims(30,30)
+                masked_mpt.mpt_plot()
+            except ValueError:
+                bad_mpts.append(i)
+                print(i, ' was a bad file, could not find a mask')
+        if bad_mpts:
+            print(bad_mpts, " are a list of bad mpts. You may want to take a closer look at them")
+    for i in lst:
+        try:
+            print(i, ' was a permissible file')
+            ex_mpt = mpt_data(path,[i])
+            masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+            masked_mpt.set_new_gph_dims(30,30)
+            masked_mpt.mpt_plot()
+        except ValueError:
+            bad_mpts.append(i)
+            print(i, ' was a bad file, could not find a mask')
+        if bad_mpts:
+            print(bad_mpts, " are a list of bad mpts. You may want to take a closer look at them")
+            
+
+def auto_fit(path, csv_container, lst = None, take_csv = False):
+    bad_mpts = []
+    fitted_files = [f for f in listdir(csv_container) if isfile(join(csv_container, f)) if f[:2] == 'fit']
+    path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
+    if not lst:
+        for i in path_files:
+            try:
+                print(i, ' was a permissible file')
+                ex_mpt = mpt_data(path,[i])
+                out_name = 'fitted_' + ex_mpt.data[0][:-4]
+                if out_name not in fitted_files:
+                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                else:
+                    print(i, ' has already been fitted!!')
+                    continue
+            except ValueError:
+                bad_mpts.append(i)
+                print(i, ' was a bad file, could not find a mask')
+    for i in lst:
+            try:
+                print(i, ' was a permissible file')
+                ex_mpt = mpt_data(path,[i])
+                out_name = 'fitted_' + ex_mpt.data[0][:-4]
+                if out_name not in fitted_files:
+                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                else:
+                    print(i, ' has already been fitted!!')
+                    continue
+            except ValueError:
+                bad_mpts.append(i)
+                print(i, ' was a bad file, could not find a mask')
+    
