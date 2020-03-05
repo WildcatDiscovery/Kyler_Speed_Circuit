@@ -894,30 +894,6 @@ def KK_RC15_fit(params, w, t_values):
     R13 = params['R13']
     R14 = params['R14']
     R15 = params['R15']
-    return Rs + (R1/(1+w*1j*t_values[0])) + (R2 /(1+w*1j*t_values[1])) + (R3 /(1+w*1j*t_values[2])) + (R4 /(1+w*1j*t_values[3])) + (R5 /(1+w*1j*t_values[4])) + (R6 /(1+w*1j*t_values[5])) + (R7 /(1+w*1j*t_values[6])) + (R8 /(1+w*1j*t_values[7])) + (R9 /(1+w*1j*t_values[8])) + (R10 /(1+w*1j*t_values[9])) + (R11 /(1+w*1j*t_values[10])) + (R12 /(1+w*1j*t_values[11])) + (R13 /(1+w*1j*t_values[12])) + (R14 /(1+w*1j*t_values[13]))
-
-def KK_RC15_fit(params, w, t_values):
-    '''
-    Kramers-Kronig Function: -RC-
-    
-    Kristian B. Knudsen (kknu@berkeley.edu / kristianbknudsen@gmail.com)
-    '''
-    Rs = params['Rs']
-    R1 = params['R1']
-    R2 = params['R2']
-    R3 = params['R3']
-    R4 = params['R4']
-    R5 = params['R5']
-    R6 = params['R6']
-    R7 = params['R7']
-    R8 = params['R8']
-    R9 = params['R9']
-    R10 = params['R10']
-    R11 = params['R11']
-    R12 = params['R12']
-    R13 = params['R13']
-    R14 = params['R14']
-    R15 = params['R15']
     return Rs + (R1/(1+w*1j*t_values[0])) + (R2 /(1+w*1j*t_values[1])) + (R3 /(1+w*1j*t_values[2])) + (R4 /(1+w*1j*t_values[3])) + (R5 /(1+w*1j*t_values[4])) + (R6 /(1+w*1j*t_values[5])) + (R7 /(1+w*1j*t_values[6])) + (R8 /(1+w*1j*t_values[7])) + (R9 /(1+w*1j*t_values[8])) + (R10 /(1+w*1j*t_values[9])) + (R11 /(1+w*1j*t_values[10])) + (R12 /(1+w*1j*t_values[11])) + (R13 /(1+w*1j*t_values[12])) + (R14 /(1+w*1j*t_values[13])) + (R15 /(1+w*1j*t_values[14]))
 
 def KK_RC16_fit(params, w, t_values):
@@ -4685,7 +4661,6 @@ def KK_timeconst(w, num_RC):
     return t_initial
 
 
-#from scipy.optimize import curve_fit
 
 def KK_errorfunc_2(w, re, im, num_RC, t_values):
     '''

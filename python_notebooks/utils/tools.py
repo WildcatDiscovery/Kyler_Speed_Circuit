@@ -12,8 +12,9 @@ from pylab import *
 from scipy.optimize import curve_fit
 import mpmath as mp
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
-#from scipy.optimize import leastsq
+import sys, traceback
 pd.options.mode.chained_assignment = None
+import statistics as stat
 
 #Plotting
 import matplotlib as mpl
@@ -44,6 +45,8 @@ class mpt_data:
         self.df_raw0 = []
         self.cycleno = []
         self.mask = mask
+        self.counter = 0
+        self.low_error = 0
         for j in range(len(data)):
             if data[j].find(".mpt") != -1: #file is a .mpt file
                 self.df_raw0.append(extract_mpt(path=path, EIS_name=data[j])) #reads all datafiles
@@ -221,14 +224,11 @@ class mpt_data:
         
     #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
+        assert circuit == 'R-RQ-RQ'
+
         self.Fit = []
         self.circuit_fit = []
         self.fit_E = []
-        for i in range(len(self.df)):
-            self.Fit.append(minimize(leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
-            print(report_fit(self.Fit[i]))
-            self.fit_E.append(np.average(self.df[i].E_avg))
-        assert circuit == 'R-RQ-RQ'
         self.fit_Rs = []
         self.fit_R = []
         self.fit_n = []
@@ -238,9 +238,21 @@ class mpt_data:
         self.fit_fs2 = []
         self.fit_Q = []
         self.fit_Q2 = []
+        self.fit_Q3 = []
+        self.fit_n3 = []
+        self.fit_fs3 = []
+
         for i in range(len(self.df)):
-            if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()):
-                self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value))
+            self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
+            print(report_fit(self.Fit[i]))
+            #print(self.Fit)
+            #self.fit_E.append(np.average(self.df[i].E_avg))
+        
+        
+        for i in range(len(self.df)):
+            if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()) and "'fs3'" in str(self.Fit[i].params.keys()):
+                #print('HERE')
+                self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value, Q3='none', n3=self.Fit[i].params.get('n3').value,fs3 = self.Fit[i].params.get('fs3').value)),
                 self.fit_Rs.append(self.Fit[i].params.get('Rs').value)
                 self.fit_R.append(self.Fit[i].params.get('R').value)
                 self.fit_n.append(self.Fit[i].params.get('n').value)
@@ -248,11 +260,38 @@ class mpt_data:
                 self.fit_R2.append(self.Fit[i].params.get('R2').value)
                 self.fit_n2.append(self.Fit[i].params.get('n2').value)
                 self.fit_fs2.append(self.Fit[i].params.get('fs2').value)
+                self.fit_fs3.append(self.Fit[i].params.get('fs3').value)
                 self.fit_Q.append(1/(self.fit_R[0] * (self.fit_fs[0] * 2 * np.pi)**self.fit_n[0])) 
                 self.fit_Q2.append(1/(self.fit_R2[0] * (self.fit_fs2[0] * 2 * np.pi)**self.fit_n2[0])) 
+                self.fit_n3.append(self.Fit[i].params.get('n3').value) 
+                #print(self.fit_fs3[0] * 2 * np.pi)
+                #print(self.fit_n3[0])
+                self.fit_Q3.append(1/((self.fit_fs3[0] * 2 * np.pi)**self.fit_n3[0])) 
             else:
                 print("Circuit Error, check inputs")
                 break
+
+    def leastsq_errorfunc(self, params, w, re, im, circuit, weight_func):
+        re_fit = cir_RsRQRQ_fit(params, w).real
+        im_fit = -cir_RsRQRQ_fit(params, w).imag
+        error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
+        print('MPT FILE : ', self.data[0], ' ERROR: ', sum(error))
+        self.low_error = sum(error)
+        #Different Weighing options, see Lasia
+        if weight_func == 'modulus':
+            weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
+        elif weight_func == 'proportional':
+            weight = [1/(re_fit**2), 1/(im_fit**2)]
+        elif weight_func == 'unity':
+            unity_1s = []
+            for k in range(len(re)):
+                unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squres.
+            weight = [unity_1s, unity_1s]
+        else:
+            print('weight not defined in leastsq_errorfunc()')
+            
+        S = np.array(weight) * error #weighted sum of squares 
+        return S
         
     #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
@@ -1853,67 +1892,99 @@ class mpt_data:
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
 
-    def guess(self, guess_package):
-        
-        #SINGLE ITERATION OF THE GUESS PROCESS
-        #USE THIS FUNCTION TO GET CLOSER TO THE IDEAL COEFFICIENTS FOR Rs, R, n, fs, R2, n2, fs2
-        #REPEAT THIS FUNCTION UNTIL THE THRESHOLD IS ACHEIVED
-        
+   
+    #Updated Guesser
+    def guesser(self, to_csv = False):
+        Rs_guess = 1e3
+        R_guess = 1 
+        n_guess = 0.8 
+        fs_guess = 1 
+        R2_guess = 100 
+        n2_guess = 0.8 
+        fs2_guess = 0.2 
+        n3_guess = 0.8
+        fs3_guess = 1
+
+
         params = Parameters()
-        
         #adding to the parameters package to send to the fitting function
-        params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
-        params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
-        params.add('n', value=guess_package[2], min=.65, max=1.2)
-        params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
-        params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
-        params.add('n2', value=guess_package[5], min=.65, max=1.2)
-        params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
-        
-        #Call to the fitting function given by PyEIS
-        self.mpt_fit(params=params, circuit='R-RQ-RQ', weight_func='modulus')
-        
-        #export the new guess package
-        guess_package =  ([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_fs[0],self.fit_R2[0],self.fit_n2[0],self.fit_fs2[0]])
-        return guess_package
+        params.add('Rs', value=Rs_guess, min=Rs_guess*.01, max=10**6)
+        params.add('R', value=R_guess, min=Rs_guess*.1, max=10**6)
+        params.add('n', value=n_guess, min=.65, max=1)
+        params.add('fs', value=fs_guess, min=10**0.5, max=10**6)
+        params.add('R2', value=R2_guess, min=R2_guess*.1, max=10**6)
+        params.add('n2', value=n2_guess, min=.65, max=1)
+        params.add('fs2', value=fs2_guess, min=10**-2, max=10**6)
+        params.add('n3', value=n3_guess, min=.65, max=1)
+        params.add('fs3', value=fs3_guess, min=10**-2, max=10**6)
+        self.mpt_fit(params, circuit = 'R-RQ-RQ')
 
-    #THIS VERIFIES WHETHER OR NOT WE'VE ACHEIVED A SATISFACTORY COEFFICIENT PACKAGE
-    #IF THIS DOESN'T RETURN TRUE, WE RUN THE GUESSER UNTIL IT DOES
-    #ITERATIVE GUESSER
-    #Note:Sometimes the graph just may not be able to get a perfect fit, so 
-    #If we don't land within the threshold within 5000 iterations, we stop the guessing iterator
-    def guesser(self, Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess, threshold = 1e-10):
-        self.counter = 0
-        self.counter += 1
-        self.threshold = threshold
-        print("ITERATION NO: ", self.counter)
-        guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
-        new_guess =self.guess(guess_package)
-        while not self.thresh_verif(guess_package, new_guess):
-            guess_package = new_guess
-            self.counter += 1
-            new_guess = self.guess(new_guess)
-            print("ITERATION NO: ", self.counter)
-            #print(new_guess)
-            if self.counter == 1000:
-                return new_guess
-        return new_guess
+        counter = 0
 
+        while self.low_error >= 100 and counter <= 100:        
+            try:
+                counter += 1
+                print('ITERATION NO. : ', counter)
+                Rs_guess = self.fit_Rs[0]
 
-    def thresh_verif(self, before, after):
-        try:
-            self.error_total = 0
-            for i in range(len(before)):
-                self.error_total += (before[i] - after[i])
-            print('total error: ', self.error_total)    
-            return abs(self.error_total) <= self.threshold
-        except IndexError as e:
-            #IF LISTS AREN'T THE SAME LENGTH
-            print("Lists are not the same length")
-            return
+                R_guess = self.fit_R[0]
+                n_guess = self.fit_n[0]
+                fs_guess = self.fit_fs[0]
+
+                R2_guess = self.fit_R2[0]
+                n2_guess = self.fit_n2[0]
+                fs2_guess = self.fit_fs2[0]
+
+                n3_guess = self.fit_n3[0]
+                fs3_guess = self.fit_fs3[0]
+
+                guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess, n3_guess, fs3_guess]
+                #adding to the parameters package to send to the fitting function
+                params = Parameters()
+                params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
+                params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
+                params.add('n', value=guess_package[2], min=.65, max=1)
+                params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
+                params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
+                params.add('n2', value=guess_package[5], min=.65, max=1)
+                params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
+                params.add('n3', value=guess_package[7], min=.65, max=1)
+                params.add('fs3', value=guess_package[8], min=10**-2, max=10**1)
+                self.mpt_fit(params, circuit = 'R-RQ-RQ')
 
 
-    def masker(self,number = 1):
+            except KeyboardInterrupt:
+                print('Interrupted!!')
+                #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
+        self.set_new_gph_dims(50,50)
+        self.mpt_plot(fitting = 'on')
+        fitted = pd.DataFrame({'file':self.data,
+                    'fit_R':self.fit_Rs,
+                "fit_Rs":self.fit_R,
+                "fit_n":self.fit_n,
+                "fit_Q":self.fit_Q,
+                "fit_R2":self.fit_R2,
+                "fit_n2":self.fit_n2,
+                "fit_Q2":self.fit_Q2,
+                "fit_n3":self.fit_n3,
+                "fit_Q3":self.fit_Q3})
+        out_name = 'fitted_' + self.data[0][:-4]
+        if to_csv == True:
+            fitted.to_csv(out_name, sep='\t')
+            return fitted
+        return fitted
+
+
+    def fast_mask(self):
+        skeleton = self.df_raw.iloc[:,0:3]
+        re_mid, im_mid  = mean(skeleton['re']), mean(skeleton['im'])
+        a = skeleton[abs(skeleton['re']) <= re_avg * .2]
+        b = skeleton[abs(skeleton['im']) <= im_avg * .2]
+        c = pd.concat([a, b]).drop_duplicates()
+        return [c['f'].max(), c['f'].min()]
+
+
+    def kk_masker(self,number = 1):
 
         num_RC='auto' 
         legend='on'
@@ -2023,56 +2094,36 @@ class mpt_data:
         if masked_mpt.counter >= 950 or abs(masked_mpt.error_total) > 1e-10:
             return masked_mpt.masker(number * .9)
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
+    
+    def masker0(self):
+        skeleton = self.df_raw.iloc[:,0:3]
+        re_lim, im_lim  = max(skeleton['re']) * .6, max(skeleton['im'] * .6)
+        a = skeleton[(skeleton['re']) <= re_lim]
+        b = skeleton[(skeleton['im']) <= im_lim]
+        c = pd.concat([a, b]).drop_duplicates()
+        
+        return [max(c['f']), min(c['f'])]
 
 
-def leastsq_errorfunc(params, w, re, im, circuit, weight_func):
-    '''
-    Sum of squares error function for the complex non-linear least-squares fitting procedure (CNLS). The fitting function (lmfit) will use this function to iterate over
-    until the total sum of errors is minimized.
-    
-    During the minimization the fit is weighed, and currently three different weigh options are avaliable:
-        - modulus
-        - unity
-        - proportional
-    
-    Modulus is generially recommended as random errors and a bias can exist in the experimental data.
-        
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+    def masker(self, num_bins = 7):
 
-    Inputs
-    ------------
-    - params: parameters needed for CNLS
-    - re: real impedance
-    - im: Imaginary impedance
-    - weight_func
-      Weight function
-        - modulus
-        - unity
-        - proportional
-    '''
-    if circuit == 'R-RQ-RQ':
-        re_fit = cir_RsRQRQ_fit(params, w).real
-        im_fit = -cir_RsRQRQ_fit(params, w).imag
-    else:
-        print('Circuit is not defined in leastsq_errorfunc()')
+        c = self.df_raw.iloc[:,0:3]
+        for cols in c.columns.tolist()[1:]:
+            c = c.ix[c[cols] > 0]
+
+        res = []
+        ims = []
         
-    error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
-    
-    #Different Weighing options, see Lasia
-    if weight_func == 'modulus':
-        weight = [1/((re_fit**2 + im_fit**2)**(1/2)), 1/((re_fit**2 + im_fit**2)**(1/2))]
-    elif weight_func == 'proportional':
-        weight = [1/(re_fit**2), 1/(im_fit**2)]
-    elif weight_func == 'unity':
-        unity_1s = []
-        for k in range(len(re)):
-            unity_1s.append(1) #makes an array of [1]'s, so that the weighing is == 1 * sum of squres.
-        weight = [unity_1s, unity_1s]
-    else:
-        print('weight not defined in leastsq_errorfunc()')
-        
-    S = np.array(weight) * error #weighted sum of squares 
-    return S
+        for i in pd.cut(c['re'], num_bins):
+            res.append(i)
+        for i in pd.cut(c['im'], num_bins):
+            ims.append(i)
+
+        d = c[(c['re'] >=stat.mode(res).left) & (c['re'] <= (stat.mode(res).right - stat.mode(res).left) * 3)]
+        f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= (stat.mode(res).right - stat.mode(res).left) * 3)]
+        return [max(f['f']), min(f['f'])]
+
+
 
 def cir_RsRQRQ_fit(params, w):
     '''
@@ -2120,61 +2171,24 @@ def cir_RsRQRQ_fit(params, w):
         R2 = params['R2']
         Q2 = params['Q2']
         n2 = params['n2']
-
+    
+    n3 = params['n3']
+    Q3 = (1/((2*np.pi*params['fs3'])**n3))
     Rs = params['Rs']
-    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
 
-def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none'):
-    '''
-    Simulation Function: -Rs-RQ-RQ-
-    Return the impedance of an Rs-RQ circuit. See details for RQ under cir_RQ_fit()
+def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none', Q3 = 'none', fs3 = 'none', n3 = 'none'):
     
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
-    
-    Inputs
-    ----------
-    w = Angular frequency [1/s]
-    Rs = Series Resistance [Ohm]
-    
-    R = Resistance [Ohm]
-    Q = Constant phase element [s^n/ohm]
-    n = Constant phase element exponent [-]
-    fs = Summit frequency of RQ circuit [Hz]
-
-    R2 = Resistance [Ohm]
-    Q2 = Constant phase element [s^n/ohm]
-    n2 = Constant phase element exponent [-]
-    fs2 = Summit frequency of RQ circuit [Hz]
-    '''
-    if R == 'none':
-        R = (1/(Q*(2*np.pi*fs)**n))
-    elif Q == 'none':
+    if Q == 'none':
         Q = (1/(R*(2*np.pi*fs)**n))
-    elif n == 'none':
-        n = np.log(Q*R)/np.log(1/(2*np.pi*fs))
-
-    if R2 == 'none':
-        R2 = (1/(Q2*(2*np.pi*fs2)**n2))
-    elif Q2 == 'none':
+    
+   
+    if Q2 == 'none':
         Q2 = (1/(R2*(2*np.pi*fs2)**n2))
-    elif n2 == 'none':
-        n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
+    
+
+    if Q3 == 'none':
+        Q3 = (1/(1*(2*np.pi*fs3)**n3))
+    
         
-    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
-
-#Fully Automated Process
-def full_auto(path,data):
-    ex_mpt = mpt_data(path,data)
-    masked_mpt = mpt_data(path,data, mask = [ex_mpt.masker()[0], ex_mpt.masker()[1]])
-
-    Rs_guess = 1
-
-    R_guess = 1
-    n_guess = 0.8
-    fs_guess = 1
-
-    R2_guess = 1
-    n2_guess = 0.8
-    fs2_guess = 1
-
-    return masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
