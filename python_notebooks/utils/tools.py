@@ -1894,7 +1894,16 @@ class mpt_data:
 
    
     #Updated Guesser
-    def guesser(self, Rs_guess = 1e3, R_guess = 1 , n_guess = 0.8, fs_guess = 1, R2_guess = 100, n2_guess = 0.8, fs2_guess = 0.2, n3_guess = 0.8, fs3_guess = 1):
+    def guesser(self, to_csv = False):
+        Rs_guess = 1e3
+        R_guess = 1 
+        n_guess = 0.8 
+        fs_guess = 1 
+        R2_guess = 100 
+        n2_guess = 0.8 
+        fs2_guess = 0.2 
+        n3_guess = 0.8
+        fs3_guess = 1
 
 
         params = Parameters()
@@ -1912,7 +1921,7 @@ class mpt_data:
 
         counter = 0
 
-        while self.low_error >= 100 and counter <= 1000:        
+        while self.low_error >= 100 and counter <= 100:        
             try:
                 counter += 1
                 print('ITERATION NO. : ', counter)
@@ -1947,7 +1956,23 @@ class mpt_data:
             except KeyboardInterrupt:
                 print('Interrupted!!')
                 #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
+        self.set_new_gph_dims(50,50)
         self.mpt_plot(fitting = 'on')
+        fitted = pd.DataFrame({'file':self.data,
+                    'fit_R':self.fit_Rs,
+                "fit_Rs":self.fit_R,
+                "fit_n":self.fit_n,
+                "fit_Q":self.fit_Q,
+                "fit_R2":self.fit_R2,
+                "fit_n2":self.fit_n2,
+                "fit_Q2":self.fit_Q2,
+                "fit_n3":self.fit_n3,
+                "fit_Q3":self.fit_Q3})
+        out_name = 'fitted_' + self.data[0][:-4]
+        if to_csv == True:
+            fitted.to_csv(out_name,sep='\t')
+            return fitted
+        return fitted
 
 
     def fast_mask(self):
