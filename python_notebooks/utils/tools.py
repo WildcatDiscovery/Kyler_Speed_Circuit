@@ -2128,11 +2128,12 @@ def cir_RsRQRQ_fit(params, w):
         R2 = params['R2']
         Q2 = params['Q2']
         n2 = params['n2']
+   
 
     Rs = params['Rs']
-    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(2*np.pi*w*1j)**n3))
 
-def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none'):
+def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none', Q3 = 'none', fs3 = 'none'):
     '''
     Simulation Function: -Rs-RQ-RQ-
     Return the impedance of an Rs-RQ circuit. See details for RQ under cir_RQ_fit()
@@ -2168,7 +2169,8 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
     elif n2 == 'none':
         n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
         
-    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2))
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + + (1/(Q3*(2*np.pi*w*1j)**n3))
+
 
 #Fully Automated Process
 def full_auto(path,data):
