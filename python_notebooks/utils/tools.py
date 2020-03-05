@@ -275,7 +275,7 @@ class mpt_data:
         re_fit = cir_RsRQRQ_fit(params, w).real
         im_fit = -cir_RsRQRQ_fit(params, w).imag
         error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
-        print('ERROR: ', sum(error), ' MPT FILE : ', self.data[0])
+        print('MPT FILE : ', self.data[0], ' ERROR: ', sum(error))
         self.low_error = sum(error)
         #Different Weighing options, see Lasia
         if weight_func == 'modulus':
@@ -1970,7 +1970,7 @@ class mpt_data:
                 "fit_Q3":self.fit_Q3})
         out_name = 'fitted_' + self.data[0][:-4]
         if to_csv == True:
-            fitted.to_csv(out_name,sep='\t')
+            fitted.to_csv(out_name, sep='\t')
             return fitted
         return fitted
 
@@ -2095,28 +2095,17 @@ class mpt_data:
             return masked_mpt.masker(number * .9)
         return (10**masked_df['f'].max(),10**masked_df['f'].min())
     
-    def masker0(self, num_bins = 2):
+    def masker0(self):
         skeleton = self.df_raw.iloc[:,0:3]
-        re_lim, im_lim  = max(skeleton['re']) * .75, max(skeleton['im'] * .75)
+        re_lim, im_lim  = max(skeleton['re']) * .6, max(skeleton['im'] * .6)
         a = skeleton[(skeleton['re']) <= re_lim]
         b = skeleton[(skeleton['im']) <= im_lim]
         c = pd.concat([a, b]).drop_duplicates()
-        for cols in c.columns.tolist()[1:]:
-            c = c.ix[c[cols] > 0]
-        res = []
-        ims = []
         
-        for i in pd.cut(c['re'], num_bins):
-            res.append(i)
-        for i in pd.cut(c['im'], num_bins):
-            ims.append(i)
-
-        d = c[(c['re'] >=stat.mode(res).left) & (c['re'] <= stat.mode(res).right)]
-        f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= stat.mode(ims).right)]
-        return [max(f['f']), min(f['f'])]
+        return [max(c['f']), min(c['f'])]
 
 
-    def masker1(self, num_bins = 3):
+    def masker(self, num_bins = 7):
 
         c = self.df_raw.iloc[:,0:3]
         for cols in c.columns.tolist()[1:]:
@@ -2130,8 +2119,8 @@ class mpt_data:
         for i in pd.cut(c['im'], num_bins):
             ims.append(i)
 
-        d = c[(c['re'] >=stat.mode(res).left) & (c['re'] <= stat.mode(res).right * 1.5)]
-        f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= stat.mode(ims).right * 1.5)]
+        d = c[(c['re'] >=stat.mode(res).left) & (c['re'] <= (stat.mode(res).right - stat.mode(res).left) * 3)]
+        f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= (stat.mode(res).right - stat.mode(res).left) * 3)]
         return [max(f['f']), min(f['f'])]
 
 
