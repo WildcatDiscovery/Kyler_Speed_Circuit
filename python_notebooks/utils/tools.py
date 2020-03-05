@@ -245,26 +245,14 @@ class mpt_data:
         for i in range(len(self.df)):
             self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
             print(report_fit(self.Fit[i]))
-            print(self.Fit)
+            #print(self.Fit)
             #self.fit_E.append(np.average(self.df[i].E_avg))
         
         
         for i in range(len(self.df)):
             if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()) and "'fs3'" in str(self.Fit[i].params.keys()):
-                print('HERE')
-                """self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, 
-                                                    Rs=self.Fit[i].params.get('Rs').value, 
-                                                    R=self.Fit[i].params.get('R').value, 
-                                                    Q='none', 
-                                                    n=self.Fit[i].params.get('n').value, 
-                                                    fs=self.Fit[i].params.get('fs').value, 
-                                                    R2=self.Fit[i].params.get('R2').value, 
-                                                    Q2='none', 
-                                                    n2=self.Fit[i].params.get('n2').value, 
-                                                    fs2=self.Fit[i].params.get('fs2').value, 
-                                                    Q3='none',  
-                                                    fs3=self.Fit[i].params.get('fs3').value, 
-                                                    n3=self.Fit[i].params.get('n3').value))"""
+                #print('HERE')
+                self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value, Q3='none', n3=self.Fit[i].params.get('n3').value,fs3 = self.Fit[i].params.get('fs3').value)),
                 self.fit_Rs.append(self.Fit[i].params.get('Rs').value)
                 self.fit_R.append(self.Fit[i].params.get('R').value)
                 self.fit_n.append(self.Fit[i].params.get('n').value)
@@ -276,8 +264,8 @@ class mpt_data:
                 self.fit_Q.append(1/(self.fit_R[0] * (self.fit_fs[0] * 2 * np.pi)**self.fit_n[0])) 
                 self.fit_Q2.append(1/(self.fit_R2[0] * (self.fit_fs2[0] * 2 * np.pi)**self.fit_n2[0])) 
                 self.fit_n3.append(self.Fit[i].params.get('n3').value) 
-                print(self.fit_fs3[0] * 2 * np.pi)
-                print(self.fit_n3[0])
+                #print(self.fit_fs3[0] * 2 * np.pi)
+                #print(self.fit_n3[0])
                 self.fit_Q3.append(1/((self.fit_fs3[0] * 2 * np.pi)**self.fit_n3[0])) 
             else:
                 print("Circuit Error, check inputs")
@@ -1906,27 +1894,25 @@ class mpt_data:
 
    
     #Updated Guesser
-    def guesser(ex_mpt, Rs_guess = 1, R_guess = 1, n_guess = 0.8, fs_guess = 1, R2_guess = 1, n2_guess = 0.8, fs2_guess = 0.2):
-    
+    def guesser(ex_mpt, Rs_guess = 1e3, R_guess = 1 , n_guess = 0.8, fs_guess = 1, R2_guess = 100, n2_guess = 0.8, fs2_guess = 0.2, n3_guess = 0.8, fs3_guess = 1):
+
+
         params = Parameters()
-        guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
         #adding to the parameters package to send to the fitting function
-        params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=10**6)
-        params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=10**6)
-        params.add('n', value=guess_package[2], min=.65, max=1)
-        params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
-        params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=10**6)
-        params.add('n2', value=guess_package[5], min=.65, max=1)
-        params.add('fs2', value=guess_package[6], min=10**-2, max=10**6)
+        params.add('Rs', value=Rs_guess, min=Rs_guess*.01, max=10**6)
+        params.add('R', value=R_guess, min=Rs_guess*.1, max=10**6)
+        params.add('n', value=n_guess, min=.65, max=1)
+        params.add('fs', value=fs_guess, min=10**0.5, max=10**6)
+        params.add('R2', value=R2_guess, min=R2_guess*.1, max=10**6)
+        params.add('n2', value=n2_guess, min=.65, max=1)
+        params.add('fs2', value=fs2_guess, min=10**-2, max=10**6)
+        params.add('n3', value=n3_guess, min=.65, max=1)
+        params.add('fs3', value=fs3_guess, min=10**-2, max=10**6)
         ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
 
         counter = 0
 
-        
-        
-        
-        while ex_mpt.low_error >= 100 and counter <= 100:
-            
+        while ex_mpt.low_error >= 100 and counter <= 1000:        
             try:
                 counter += 1
                 print('ITERATION NO. : ', counter)
@@ -1940,7 +1926,10 @@ class mpt_data:
                 n2_guess = ex_mpt.fit_n2[0]
                 fs2_guess = ex_mpt.fit_fs2[0]
 
-                guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess]
+                n3_guess = ex_mpt.fit_n3[0]
+                fs3_guess = ex_mpt.fit_fs3[0]
+
+                guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess, n3_guess, fs3_guess]
                 #adding to the parameters package to send to the fitting function
                 params = Parameters()
                 params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
@@ -1950,9 +1939,11 @@ class mpt_data:
                 params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
                 params.add('n2', value=guess_package[5], min=.65, max=1)
                 params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
+                params.add('n3', value=guess_package[7], min=.65, max=1)
+                params.add('fs3', value=guess_package[8], min=10**-2, max=10**1)
                 ex_mpt.mpt_fit(params, circuit = 'R-RQ-RQ')
 
-        
+
             except KeyboardInterrupt:
                 print('Interrupted!!')
                 #print([ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_Q[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_Q2[0]])
@@ -2157,44 +2148,17 @@ def cir_RsRQRQ_fit(params, w):
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
 
 def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none', Q3 = 'none', fs3 = 'none', n3 = 'none'):
-    '''
-    Simulation Function: -Rs-RQ-RQ-
-    Return the impedance of an Rs-RQ circuit. See details for RQ under cir_RQ_fit()
     
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
-    
-    Inputs
-    ----------
-    w = Angular frequency [1/s]
-    Rs = Series Resistance [Ohm]
-    
-    R = Resistance [Ohm]
-    Q = Constant phase element [s^n/ohm]
-    n = Constant phase element exponent [-]
-    fs = Summit frequency of RQ circuit [Hz]
-
-    R2 = Resistance [Ohm]
-    Q2 = Constant phase element [s^n/ohm]
-    n2 = Constant phase element exponent [-]
-    fs2 = Summit frequency of RQ circuit [Hz]
-    '''
-    if R == 'none':
-        R = (1/(Q*(2*np.pi*fs)**n))
-    elif Q == 'none':
+    if Q == 'none':
         Q = (1/(R*(2*np.pi*fs)**n))
-    elif n == 'none':
-        n = np.log(Q*R)/np.log(1/(2*np.pi*fs))
-
-    if R2 == 'none':
-        R2 = (1/(Q2*(2*np.pi*fs2)**n2))
-    elif Q2 == 'none':
+    
+   
+    if Q2 == 'none':
         Q2 = (1/(R2*(2*np.pi*fs2)**n2))
-    elif n2 == 'none':
-        n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
+    
 
-    elif Q3 == 'none':
+    if Q3 == 'none':
         Q3 = (1/(1*(2*np.pi*fs3)**n3))
-    elif n3 == 'none':
-        n3 = np.log(Q3*1)/np.log(1/(2*np.pi*fs3))
+    
         
     return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
