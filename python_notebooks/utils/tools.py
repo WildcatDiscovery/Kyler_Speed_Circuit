@@ -238,16 +238,33 @@ class mpt_data:
         self.fit_fs2 = []
         self.fit_Q = []
         self.fit_Q2 = []
+        self.fit_Q3 = []
+        self.fit_n3 = []
+        self.fit_fs3 = []
 
         for i in range(len(self.df)):
             self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
             print(report_fit(self.Fit[i]))
-            self.fit_E.append(np.average(self.df[i].E_avg))
+            print(self.Fit)
+            #self.fit_E.append(np.average(self.df[i].E_avg))
         
         
         for i in range(len(self.df)):
-            if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()):
-                self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, Rs=self.Fit[i].params.get('Rs').value, R=self.Fit[i].params.get('R').value, Q='none', n=self.Fit[i].params.get('n').value, fs=self.Fit[i].params.get('fs').value, R2=self.Fit[i].params.get('R2').value, Q2='none', n2=self.Fit[i].params.get('n2').value, fs2=self.Fit[i].params.get('fs2').value))
+            if "'fs'" in str(self.Fit[i].params.keys()) and "'fs2'" in str(self.Fit[i].params.keys()) and "'fs3'" in str(self.Fit[i].params.keys()):
+                print('HERE')
+                """self.circuit_fit.append(cir_RsRQRQ(w=self.df[i].w, 
+                                                    Rs=self.Fit[i].params.get('Rs').value, 
+                                                    R=self.Fit[i].params.get('R').value, 
+                                                    Q='none', 
+                                                    n=self.Fit[i].params.get('n').value, 
+                                                    fs=self.Fit[i].params.get('fs').value, 
+                                                    R2=self.Fit[i].params.get('R2').value, 
+                                                    Q2='none', 
+                                                    n2=self.Fit[i].params.get('n2').value, 
+                                                    fs2=self.Fit[i].params.get('fs2').value, 
+                                                    Q3='none',  
+                                                    fs3=self.Fit[i].params.get('fs3').value, 
+                                                    n3=self.Fit[i].params.get('n3').value))"""
                 self.fit_Rs.append(self.Fit[i].params.get('Rs').value)
                 self.fit_R.append(self.Fit[i].params.get('R').value)
                 self.fit_n.append(self.Fit[i].params.get('n').value)
@@ -255,8 +272,13 @@ class mpt_data:
                 self.fit_R2.append(self.Fit[i].params.get('R2').value)
                 self.fit_n2.append(self.Fit[i].params.get('n2').value)
                 self.fit_fs2.append(self.Fit[i].params.get('fs2').value)
+                self.fit_fs3.append(self.Fit[i].params.get('fs3').value)
                 self.fit_Q.append(1/(self.fit_R[0] * (self.fit_fs[0] * 2 * np.pi)**self.fit_n[0])) 
                 self.fit_Q2.append(1/(self.fit_R2[0] * (self.fit_fs2[0] * 2 * np.pi)**self.fit_n2[0])) 
+                self.fit_n3.append(self.Fit[i].params.get('n3').value) 
+                print(self.fit_fs3[0] * 2 * np.pi)
+                print(self.fit_n3[0])
+                self.fit_Q3.append(1/((self.fit_fs3[0] * 2 * np.pi)**self.fit_n3[0])) 
             else:
                 print("Circuit Error, check inputs")
                 break
@@ -1933,7 +1955,7 @@ class mpt_data:
         
             except KeyboardInterrupt:
                 print('Interrupted!!')
-                print([ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_Q[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_Q2[0]])
+                #print([ex_mpt.fit_Rs[0],ex_mpt.fit_R[0],ex_mpt.fit_n[0],ex_mpt.fit_Q[0],ex_mpt.fit_R2[0],ex_mpt.fit_n2[0],ex_mpt.fit_Q2[0]])
         ex_mpt.mpt_plot(fitting = 'on')
 
 
@@ -2128,12 +2150,13 @@ def cir_RsRQRQ_fit(params, w):
         R2 = params['R2']
         Q2 = params['Q2']
         n2 = params['n2']
-   
-
+    
+    n3 = params['n3']
+    Q3 = (1/((2*np.pi*params['fs3'])**n3))
     Rs = params['Rs']
-    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(2*np.pi*w*1j)**n3))
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
 
-def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none', Q3 = 'none', fs3 = 'none'):
+def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='none', n2='none', fs2='none', Q3 = 'none', fs3 = 'none', n3 = 'none'):
     '''
     Simulation Function: -Rs-RQ-RQ-
     Return the impedance of an Rs-RQ circuit. See details for RQ under cir_RQ_fit()
@@ -2168,23 +2191,10 @@ def cir_RsRQRQ(w, Rs, R='none', Q='none', n='none', fs='none', R2='none', Q2='no
         Q2 = (1/(R2*(2*np.pi*fs2)**n2))
     elif n2 == 'none':
         n2 = np.log(Q2*R2)/np.log(1/(2*np.pi*fs2))
+
+    elif Q3 == 'none':
+        Q3 = (1/(1*(2*np.pi*fs3)**n3))
+    elif n3 == 'none':
+        n3 = np.log(Q3*1)/np.log(1/(2*np.pi*fs3))
         
-    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + + (1/(Q3*(2*np.pi*w*1j)**n3))
-
-
-#Fully Automated Process
-def full_auto(path,data):
-    ex_mpt = mpt_data(path,data)
-    masked_mpt = mpt_data(path,data, mask = [ex_mpt.masker()[0], ex_mpt.masker()[1]])
-
-    Rs_guess = 1
-
-    R_guess = 1
-    n_guess = 0.8
-    fs_guess = 1
-
-    R2_guess = 1
-    n2_guess = 0.8
-    fs2_guess = 1
-
-    return masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
+    return Rs + (R/(1+R*Q*(w*1j)**n)) + (R2/(1+R2*Q2*(w*1j)**n2)) + (1/(Q3*(w*1j))**n3)
