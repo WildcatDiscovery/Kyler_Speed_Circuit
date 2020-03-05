@@ -1894,7 +1894,7 @@ class mpt_data:
 
    
     #Updated Guesser
-    def guesser(self, to_csv = False):
+    def guesser(self, csv_container, to_csv = False):
         Rs_guess = 1e3
         R_guess = 1 
         n_guess = 0.8 
@@ -1921,7 +1921,7 @@ class mpt_data:
 
         counter = 0
 
-        while self.low_error >= 100 and counter <= 100:        
+        while self.low_error >= 100000 and counter <= 100:        
             try:
                 counter += 1
                 print('ITERATION NO. : ', counter)
@@ -1958,7 +1958,7 @@ class mpt_data:
                 #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
         self.set_new_gph_dims(50,50)
         self.mpt_plot(fitting = 'on')
-        fitted = pd.DataFrame({'file':self.data,
+        self.fitted = pd.DataFrame({'file':self.data,
                     'fit_R':self.fit_Rs,
                 "fit_Rs":self.fit_R,
                 "fit_n":self.fit_n,
@@ -1970,9 +1970,9 @@ class mpt_data:
                 "fit_Q3":self.fit_Q3})
         out_name = 'fitted_' + self.data[0][:-4]
         if to_csv == True:
-            fitted.to_csv(out_name, sep='\t')
-            return fitted
-        return fitted
+            self.fitted.to_csv(csv_container+out_name, sep='\t')
+            return self.fitted
+        return self.fitted
 
 
     def fast_mask(self):
