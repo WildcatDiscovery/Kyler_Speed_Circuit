@@ -16,6 +16,7 @@ import sys, traceback
 pd.options.mode.chained_assignment = None
 import statistics as stat
 
+
 #Plotting
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -2223,7 +2224,7 @@ def full_graphing(path, lst = None):
             print(i, ' was a bad file, could not find a mask')
         if bad_mpts:
             print(bad_mpts, " are a list of bad mpts. You may want to take a closer look at them")
-            
+
 
 def auto_fit(path, csv_container, lst = None, take_csv = False):
     bad_mpts = []
