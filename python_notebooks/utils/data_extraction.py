@@ -22,51 +22,6 @@ def extract_mpt(path, EIS_name):
         names_EIS.append(correct_text_EIS(EIS_test_header_names.columns[j])) #reads coloumn text
     return pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:-1]), names=names_EIS, encoding='latin1')
 
-
-#TAKEN FROM PYEIS LIBRARY
-def extract_dta(path, EIS_name):
-    '''
-    Extracting data files from Gamry '.DTA' format, coloums are renames following correct_text_EIS()
-    
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
-    '''
-    dummy_col = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I','J','K','L','M','N','O','P']
-    init = pd.read_csv(path+EIS_name, encoding='latin1', sep='\t', names=dummy_col)
-    ZC = pd.Index(init.A)
-    header_loc = ZC.get_loc('ZCURVE')+1  ##ZC.get_loc('ZCURVE')+3
-    
-    header_names_raw = pd.read_csv(path+EIS_name, sep='\t', skiprows=header_loc, encoding='latin1') #locates number of skiplines
-    header_names = []
-    for j in range(len(header_names_raw.columns)):
-        header_names.append(correct_text_EIS(header_names_raw.columns[j])) #reads coloumn text
-    data = pd.read_csv(path+EIS_name, sep='\t', skiprows=ZC.get_loc('ZCURVE')+3, names=header_names, encoding='latin1')
-    data.update({'im': np.abs(data.im)})
-    data = data.assign(cycle_number = 1.0)
-    return data
-
-
-#TAKEN FROM PYEIS LIBRARY
-def extract_solar(path, EIS_name):
-    '''
-    Extracting data files from Solartron's '.z' format, coloums are renames following correct_text_EIS()
-    
-    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
-    '''
-    dummy_col = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I','J','K','L','M','N','O','P']
-    init = pd.read_csv(path+EIS_name, encoding='latin1', sep='\t', names=dummy_col)
-    ZC = pd.Index(init.A)
-    header_loc = ZC.get_loc('  Freq(Hz)')
-    
-    header_names_raw = pd.read_csv(path+EIS_name, sep='\t', skiprows=header_loc, encoding='latin1') #locates number of skiplines
-    header_names = []
-    for j in range(len(header_names_raw.columns)):
-        header_names.append(correct_text_EIS(header_names_raw.columns[j])) #reads coloumn text
-    data = pd.read_csv(path+EIS_name, sep='\t', skiprows=header_loc+2, names=header_names, encoding='latin1')
-    data.update({'im': -data.im})
-    data = data.assign(cycle_number = 1.0)
-    return data
-
-
 #TAKEN FROM PYEIS LIBRARY
 def correct_text_EIS(text_header):
     '''Corrects the text of '*.mpt' and '*.dta' files into readable parameters without spaces, ., or /

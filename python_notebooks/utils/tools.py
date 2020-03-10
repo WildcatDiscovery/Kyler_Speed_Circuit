@@ -7,14 +7,14 @@
 from __future__ import division
 import pandas as pd
 import numpy as np
+from scipy.constants import codata
+from pylab import *
+from scipy.optimize import curve_fit
 import mpmath as mp
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
 import sys, traceback
 pd.options.mode.chained_assignment = None
 import statistics as stat
-
-import sys
-
 
 #Plotting
 import matplotlib as mpl
@@ -28,9 +28,13 @@ mpl.rc('xtick', labelsize=16)
 mpl.rc('ytick', labelsize=16)
 mpl.rc('legend',fontsize=14)
 
+from scipy.constants import codata
+F = codata.physical_constants['Faraday constant'][0]
+Rg = codata.physical_constants['molar gas constant'][0]
 
-from data_extraction import *
-from lin_kk import *
+
+from utils.data_extraction import *
+from utils.lin_kk import *
 
 #print(path, data)
 class mpt_data:
@@ -1970,157 +1974,6 @@ class mpt_data:
             self.fitted.to_csv(csv_container+out_name, sep='\t')
             return self.fitted
         return self.fitted
-
-
-    def fast_mask(self):
-        skeleton = self.df_raw.iloc[:,0:3]
-        re_mid, im_mid  = mean(skeleton['re']), mean(skeleton['im'])
-        a = skeleton[abs(skeleton['re']) <= re_avg * .2]
-        b = skeleton[abs(skeleton['im']) <= im_avg * .2]
-        c = pd.concat([a, b]).drop_duplicates()
-        return [c['f'].max(), c['f'].min()]
-
-
-    def kk_masker(self,number = 1):
-
-        num_RC='auto' 
-        legend='on'
-        plot='residuals'
-        bode='off'
-        nyq_xlim='none'
-        nyq_ylim='none'
-        weight_func='Boukamp'
-
-
-        
-        print('cycle || No. RC-elements ||   u')
-        self.decade = []
-        self.Rparam = []
-        self.t_const = []
-        self.Lin_KK_Fit = []
-        self.R_names = []
-        self.KK_R0 = []
-        self.KK_R = []
-        self.number_RC = []
-        self.number_RC_sort = []
-
-        self.KK_u = []
-        self.KK_Rgreater = []
-        self.KK_Rminor = []
-        M = 2
-        for i in range(len(self.df)):
-            self.decade.append(np.log10(np.max(self.df[i].f))-np.log10(np.min(self.df[i].f))) #determine the number of RC circuits based on the number of decades measured and num_RC
-            self.number_RC.append(M)
-            self.number_RC_sort.append(M) #needed for self.KK_R
-            self.Rparam.append(KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[0]) #Creates intial guesses for R's
-            self.t_const.append(KK_timeconst(w=self.df[i].w, num_RC=int(self.number_RC[i]))) #Creates time constants values for self.number_RC -(RC)- circuits
-            
-            self.Lin_KK_Fit.append(minimize(KK_errorfunc, self.Rparam[i], method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, self.number_RC[i], weight_func, self.t_const[i]) )) #maxfev=99
-            self.R_names.append(KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[1]) #creates R names
-            for j in range(len(self.R_names[i])):
-                self.KK_R0.append(self.Lin_KK_Fit[i].params.get(self.R_names[i][j]).value)
-        self.number_RC_sort.insert(0,0) #needed for self.KK_R
-        for i in range(len(self.df)):
-            self.KK_R.append(self.KK_R0[int(np.cumsum(self.number_RC_sort)[i]):int(np.cumsum(self.number_RC_sort)[i+1])]) #assigns resistances from each spectra to their respective df
-            self.KK_Rgreater.append(np.where(np.array(self.KK_R)[i] >= 0, np.array(self.KK_R)[i], 0) )
-            self.KK_Rminor.append(np.where(np.array(self.KK_R)[i] < 0, np.array(self.KK_R)[i], 0) )
-            self.KK_u.append(1-(np.abs(np.sum(self.KK_Rminor[i]))/np.abs(np.sum(self.KK_Rgreater[i]))))
-
-        for i in range(len(self.df)):
-            while self.KK_u[i] <= 0.75 or self.KK_u[i] >= 0.88:
-                self.number_RC_sort0 = []
-                self.KK_R_lim = []
-                self.number_RC[i] = self.number_RC[i] + 1
-                self.number_RC_sort0.append(self.number_RC)
-                self.number_RC_sort = np.insert(self.number_RC_sort0, 0,0)
-                self.Rparam[i] = KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[0] #Creates intial guesses for R's
-                self.t_const[i] = KK_timeconst(w=self.df[i].w, num_RC=int(self.number_RC[i])) #Creates time constants values for self.number_RC -(RC)- circuits
-                self.Lin_KK_Fit[i] = minimize(KK_errorfunc, self.Rparam[i], method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, self.number_RC[i], weight_func, self.t_const[i]) ) #maxfev=99
-                self.R_names[i] = KK_Rnam_val(re=self.df[i].re, re_start=self.df[i].re.idxmin(), num_RC=int(self.number_RC[i]))[1] #creates R names
-                self.KK_R0 = np.delete(np.array(self.KK_R0), np.s_[0:len(self.KK_R0)])
-                self.KK_R0 = []
-                for q in range(len(self.df)):
-                    for j in range(len(self.R_names[q])):
-                        self.KK_R0.append(self.Lin_KK_Fit[q].params.get(self.R_names[q][j]).value)
-                self.KK_R_lim = np.cumsum(self.number_RC_sort) #used for KK_R[i]
-
-                self.KK_R[i] = self.KK_R0[self.KK_R_lim[i]:self.KK_R_lim[i+1]] #assigns resistances from each spectra to their respective df
-                self.KK_Rgreater[i] = np.where(np.array(self.KK_R[i]) >= 0, np.array(self.KK_R[i]), 0)
-                self.KK_Rminor[i] = np.where(np.array(self.KK_R[i]) < 0, np.array(self.KK_R[i]), 0)
-                self.KK_u[i] = 1-(np.abs(np.sum(self.KK_Rminor[i]))/np.abs(np.sum(self.KK_Rgreater[i])))
-            else:
-                print('['+str(i+1)+']'+'            '+str(self.number_RC[i]),'           '+str(np.round(self.KK_u[i],2)))
-
-        self.KK_circuit_fit = []
-        self.KK_rr_re = []
-        self.KK_rr_im = []
-        functs = []
-        for i in range(2,81):
-            functs.append('KK_RC'+str(i))
-
-        for i in range(len(self.df)):
-            cir_num = int(self.number_RC[i])
-            cir_funct = eval(functs[cir_num - 2])
-            self.KK_circuit_fit.append(cir_funct(w=self.df[0].w, Rs=self.Lin_KK_Fit[0].params.get('Rs').value, R_values=self.KK_R[0], t_values=self.t_const[0]))
-            if cir_num >= 81:
-                print('RC simulation circuit not defined')
-                print('   Number of RC = ', self.number_RC)
-            self.KK_rr_re.append(residual_real(re=self.df[i].re, fit_re=self.KK_circuit_fit[i].real, fit_im=-self.KK_circuit_fit[i].imag)) #relative residuals for the real part
-            self.KK_rr_im.append(residual_imag(im=self.df[i].im, fit_re=self.KK_circuit_fit[i].real, fit_im=-self.KK_circuit_fit[i].imag)) #relative residuals for the imag part
-
-
-
-        self.kk_df = pd.DataFrame({'f':np.log10(self.df_raw.f), 're':self.KK_rr_re[0]*100, 'im':self.KK_rr_im[0]*100})
-        self.kk_df['difference'] = abs(self.kk_df['re'] - self.kk_df['im'])
-        diff_mean = self.kk_df['difference'].mean()
-        masked_df = self.kk_df[self.kk_df['difference'] < diff_mean * number]
-        print('MASK BOUNDARIES: ', 10**masked_df['f'].max(),10**masked_df['f'].min())
-        masked_mpt = mpt_data(self.path, self.data, mask = [10**masked_df['f'].max(),10**masked_df['f'].min()])
-        
-        Rs_guess = 40
-
-        R_guess = 2959
-        n_guess = 0.8
-        fs_guess = 23023
-
-        R2_guess = 258738
-        n2_guess = 0.8
-        fs2_guess = 0.2
-        
-        fit_guess = masked_mpt.guesser(Rs_guess,R_guess,n_guess,fs_guess,R2_guess,n2_guess,fs2_guess)
-        if masked_mpt.counter >= 950 or abs(masked_mpt.error_total) > 1e-10:
-            return masked_mpt.masker(number * .9)
-        return (10**masked_df['f'].max(),10**masked_df['f'].min())
-    
-    def masker0(self):
-        skeleton = self.df_raw.iloc[:,0:3]
-        re_lim, im_lim  = max(skeleton['re']) * .6, max(skeleton['im'] * .6)
-        a = skeleton[(skeleton['re']) <= re_lim]
-        b = skeleton[(skeleton['im']) <= im_lim]
-        c = pd.concat([a, b]).drop_duplicates()
-        
-        return [max(c['f']), min(c['f'])]
-
-
-    def masker(self, num_bins = 7):
-
-        c = self.df_raw.iloc[:,0:3]
-        for cols in c.columns.tolist()[1:]:
-            c = c.ix[c[cols] > 0]
-
-        res = []
-        ims = []
-        
-        for i in pd.cut(c['re'], num_bins):
-            res.append(i)
-        for i in pd.cut(c['im'], num_bins):
-            ims.append(i)
-
-        d = c[(c['re'] >=stat.mode(res).left) & (c['re'] <= (stat.mode(res).right - stat.mode(res).left) * 3)]
-        f = d[(d['im'] >=stat.mode(ims).left) & (d['im'] <= (stat.mode(res).right - stat.mode(res).left) * 3)]
-        return [max(f['f']), min(f['f'])]
-
-
 
 def cir_RsRQRQ_fit(params, w):
     '''
