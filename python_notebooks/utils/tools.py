@@ -32,10 +32,7 @@ mpl.rc('legend',fontsize=14)
 from data_extraction import *
 from lin_kk import *
 
-path = sys.argv[1]
-data = sys.argv[2]
-
-
+#print(path, data)
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
         self.path = path
