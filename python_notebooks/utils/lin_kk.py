@@ -9,7 +9,7 @@ This script contains the core for the linear Kramer-Kronig analysis
 """
 import numpy as np
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
-
+from scipy.optimize import curve_fit
 ### Simulation Functions
 ##
 #
