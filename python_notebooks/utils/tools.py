@@ -429,7 +429,8 @@ class mpt_data:
         S = np.array(weight) * error #weighted sum of squares 
         return S
         
-    #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
+
+"""    #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
         #NEED TO REDOCUMENT
         '''
@@ -2027,6 +2028,7 @@ class mpt_data:
                     fig.savefig(savefig)
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
+"""
 
     #Updated Guesser
     def guesser(self, csv_container, to_csv = False):
