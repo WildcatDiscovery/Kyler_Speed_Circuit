@@ -428,7 +428,88 @@ class mpt_data:
             
         S = np.array(weight) * error #weighted sum of squares 
         return S
-        
+    
+    #Updated Guesser
+    def guesser(self, csv_container, to_csv = False):
+        Rs_guess = 1e3
+        R_guess = 1 
+        n_guess = 0.8 
+        fs_guess = 1 
+        R2_guess = 100 
+        n2_guess = 0.8 
+        fs2_guess = 0.2 
+        n3_guess = 0.8
+        fs3_guess = 1
+
+
+        params = Parameters()
+        #adding to the parameters package to send to the fitting function
+        params.add('Rs', value=Rs_guess, min=Rs_guess*.01, max=10**6)
+        params.add('R', value=R_guess, min=Rs_guess*.1, max=10**6)
+        params.add('n', value=n_guess, min=.65, max=1)
+        params.add('fs', value=fs_guess, min=10**0.5, max=10**6)
+        params.add('R2', value=R2_guess, min=R2_guess*.1, max=10**6)
+        params.add('n2', value=n2_guess, min=.65, max=1)
+        params.add('fs2', value=fs2_guess, min=10**-2, max=10**6)
+        params.add('n3', value=n3_guess, min=.65, max=1)
+        params.add('fs3', value=fs3_guess, min=10**-2, max=10**6)
+        self.mpt_fit(params, circuit = 'R-RQ-RQ')
+
+        counter = 0
+
+        while self.low_error >= 100000 and counter <= 100:        
+            try:
+                counter += 1
+                print('ITERATION NO. : ', counter)
+                Rs_guess = self.fit_Rs[0]
+
+                R_guess = self.fit_R[0]
+                n_guess = self.fit_n[0]
+                fs_guess = self.fit_fs[0]
+
+                R2_guess = self.fit_R2[0]
+                n2_guess = self.fit_n2[0]
+                fs2_guess = self.fit_fs2[0]
+
+                n3_guess = self.fit_n3[0]
+                fs3_guess = self.fit_fs3[0]
+
+                guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess, n3_guess, fs3_guess]
+                #adding to the parameters package to send to the fitting function
+                params = Parameters()
+                params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
+                params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
+                params.add('n', value=guess_package[2], min=.65, max=1)
+                params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
+                params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
+                params.add('n2', value=guess_package[5], min=.65, max=1)
+                params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
+                params.add('n3', value=guess_package[7], min=.65, max=1)
+                params.add('fs3', value=guess_package[8], min=10**-2, max=10**1)
+                self.mpt_fit(params, circuit = 'R-RQ-RQ')
+
+
+            except KeyboardInterrupt:
+                print('Interrupted!!')
+                #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
+        self.set_new_gph_dims(50,50)
+        self.mpt_plot(fitting = 'on')
+        self.fitted = pd.DataFrame({'file':self.data,
+                    'fit_R':self.fit_Rs,
+                "fit_Rs":self.fit_R,
+                "fit_n":self.fit_n,
+                "fit_Q":self.fit_Q,
+                "fit_R2":self.fit_R2,
+                "fit_n2":self.fit_n2,
+                "fit_Q2":self.fit_Q2,
+                "fit_n3":self.fit_n3,
+                "fit_Q3":self.fit_Q3})
+        out_name = 'fitted_' + self.data[0][:-4]
+        if to_csv == True:
+            self.fitted.to_csv(csv_container+out_name, sep='\t')
+            return self.fitted
+        return self.fitted
+
 
 """    #DETERMINE THE OPTIMAL MASK THROUGH LINEAR KRAMER KRONIG ANALYSIS      
     def Lin_KK(self, num_RC='auto', legend='on', plot='residuals', bode='off', nyq_xlim='none', nyq_ylim='none', weight_func='Boukamp', savefig='none'):
@@ -2029,88 +2110,6 @@ class mpt_data:
             else:
                 print('Too many spectras, cannot plot all. Maximum spectras allowed = 9')
 """
-
-    #Updated Guesser
-    def guesser(self, csv_container, to_csv = False):
-        Rs_guess = 1e3
-        R_guess = 1 
-        n_guess = 0.8 
-        fs_guess = 1 
-        R2_guess = 100 
-        n2_guess = 0.8 
-        fs2_guess = 0.2 
-        n3_guess = 0.8
-        fs3_guess = 1
-
-
-        params = Parameters()
-        #adding to the parameters package to send to the fitting function
-        params.add('Rs', value=Rs_guess, min=Rs_guess*.01, max=10**6)
-        params.add('R', value=R_guess, min=Rs_guess*.1, max=10**6)
-        params.add('n', value=n_guess, min=.65, max=1)
-        params.add('fs', value=fs_guess, min=10**0.5, max=10**6)
-        params.add('R2', value=R2_guess, min=R2_guess*.1, max=10**6)
-        params.add('n2', value=n2_guess, min=.65, max=1)
-        params.add('fs2', value=fs2_guess, min=10**-2, max=10**6)
-        params.add('n3', value=n3_guess, min=.65, max=1)
-        params.add('fs3', value=fs3_guess, min=10**-2, max=10**6)
-        self.mpt_fit(params, circuit = 'R-RQ-RQ')
-
-        counter = 0
-
-        while self.low_error >= 100000 and counter <= 100:        
-            try:
-                counter += 1
-                print('ITERATION NO. : ', counter)
-                Rs_guess = self.fit_Rs[0]
-
-                R_guess = self.fit_R[0]
-                n_guess = self.fit_n[0]
-                fs_guess = self.fit_fs[0]
-
-                R2_guess = self.fit_R2[0]
-                n2_guess = self.fit_n2[0]
-                fs2_guess = self.fit_fs2[0]
-
-                n3_guess = self.fit_n3[0]
-                fs3_guess = self.fit_fs3[0]
-
-                guess_package = [Rs_guess, R_guess, n_guess, fs_guess, R2_guess, n2_guess, fs2_guess, n3_guess, fs3_guess]
-                #adding to the parameters package to send to the fitting function
-                params = Parameters()
-                params.add('Rs', value=guess_package[0], min=guess_package[0]*.01, max=guess_package[0]*100)
-                params.add('R', value=guess_package[1], min=guess_package[1]*.1, max=guess_package[1]*10)
-                params.add('n', value=guess_package[2], min=.65, max=1)
-                params.add('fs', value=guess_package[3], min=10**0.5, max=10**6)
-                params.add('R2', value=guess_package[4], min=guess_package[4]*.1, max=guess_package[4]*10)
-                params.add('n2', value=guess_package[5], min=.65, max=1)
-                params.add('fs2', value=guess_package[6], min=10**-2, max=10**1)
-                params.add('n3', value=guess_package[7], min=.65, max=1)
-                params.add('fs3', value=guess_package[8], min=10**-2, max=10**1)
-                self.mpt_fit(params, circuit = 'R-RQ-RQ')
-
-
-            except KeyboardInterrupt:
-                print('Interrupted!!')
-                #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
-        self.set_new_gph_dims(50,50)
-        self.mpt_plot(fitting = 'on')
-        self.fitted = pd.DataFrame({'file':self.data,
-                    'fit_R':self.fit_Rs,
-                "fit_Rs":self.fit_R,
-                "fit_n":self.fit_n,
-                "fit_Q":self.fit_Q,
-                "fit_R2":self.fit_R2,
-                "fit_n2":self.fit_n2,
-                "fit_Q2":self.fit_Q2,
-                "fit_n3":self.fit_n3,
-                "fit_Q3":self.fit_Q3})
-        out_name = 'fitted_' + self.data[0][:-4]
-        if to_csv == True:
-            self.fitted.to_csv(csv_container+out_name, sep='\t')
-            return self.fitted
-        return self.fitted
-
 
 def cir_RsRQRQ_fit(params, w):
     '''
