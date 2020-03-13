@@ -8,14 +8,13 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 from scipy.constants import codata
+from pylab import *
 from scipy.optimize import curve_fit
 import mpmath as mp
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
 import sys, traceback
 pd.options.mode.chained_assignment = None
 import statistics as stat
-from os import listdir
-from os.path import isfile, join
 
 #Plotting
 import matplotlib as mpl
@@ -35,7 +34,8 @@ Rg = codata.physical_constants['molar gas constant'][0]
 
 
 from utils.data_extraction import *
-#print(path, data)
+#from utils.lin_kk import *
+
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
         self.path = path
@@ -50,10 +50,6 @@ class mpt_data:
         for j in range(len(data)):
             if data[j].find(".mpt") != -1: #file is a .mpt file
                 self.df_raw0.append(extract_mpt(path=path, EIS_name=data[j])) #reads all datafiles
-            elif data[j].find(".DTA") != -1: #file is a .dta file
-                self.df_raw0.append(extract_dta(path=path, EIS_name=data[j])) #reads all datafiles
-            elif data[j].find(".z") != -1: #file is a .z file
-                self.df_raw0.append(extract_solar(path=path, EIS_name=data[j])) #reads all datafiles
             else:
                 print('Data file(s) could not be identified')
 
@@ -126,7 +122,7 @@ class mpt_data:
     
     def fast_mask(self):
         skeleton = self.df_raw.iloc[:,0:3]
-        re_mid, im_mid  = mean(skeleton['re']), mean(skeleton['im'])
+        re_mid, im_mid  = np.mean(skeleton['re']), np.mean(skeleton['im'])
         a = skeleton[abs(skeleton['re']) <= re_mid * .5]
         b = skeleton[abs(skeleton['im']) <= im_mid * .5]
         c = pd.concat([a, b]).drop_duplicates()
@@ -163,15 +159,16 @@ class mpt_data:
         return [max(f['f']), min(f['f'])]
 
     def window_masker(self, x_window, y_window):
-        adj_re = self.df_raw[(self.df_raw['re']<y_window[1]) & (self.df_raw['re']>y_window[0])]
-        adj_mpt = adj_re[(adj_re['im']<x_window[1]) & (adj_re['im']>x_window[0])]
+        adj_re = self.df_raw[(self.df_raw['re']<y_window[1]) & (self.df_raw['re']>x_window[0])]
+        adj_mpt = adj_re[(adj_re['im']<y_window[1]) & (adj_re['im']>y_window[0])]
         return [max(adj_mpt['f']), min(adj_mpt['f'])]
     
     #PLOTTING FUNCTION
     def mpt_plot(self, fitting='off', rr='off', legend='on', x_window = 'none', y_window = 'none'):
         
         #Figure Initialization
-        fig = figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
+        
+        fig = plt.figure(dpi=120, figsize = [self.width, self.height], facecolor='w', edgecolor='w')
         fig.subplots_adjust(left=0.1, right=0.95, hspace=0.5, bottom=0.1, top=0.95)
         ax = fig.add_subplot(211, aspect='equal')
         
