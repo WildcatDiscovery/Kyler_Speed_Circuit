@@ -544,6 +544,7 @@ def the_ringer(path, single_file):
 #TAKE_CSV for when you want to export a csv
 
 def auto_fit(path, csv_container, lst = None, take_csv = False):
+
     bad_mpts = []
     fitted_files = [f for f in listdir(csv_container) if isfile(join(csv_container, f)) if f[:9] == 'fitted_DE']
     path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
@@ -604,3 +605,9 @@ def auto_fit(path, csv_container, lst = None, take_csv = False):
                     continue
                 ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
                 print(i, ' was fittable, but could not obtain a mask')
+
+def check_list(path):
+    path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
+    for i in path_files:
+        print(i)
+    #print(path_files) 
