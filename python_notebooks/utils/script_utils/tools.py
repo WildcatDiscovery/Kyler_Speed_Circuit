@@ -36,8 +36,8 @@ F = codata.physical_constants['Faraday constant'][0]
 Rg = codata.physical_constants['molar gas constant'][0]
 
 
-from utils.data_extraction import *
-from utils.lin_kk import *
+from data_extraction import *
+from lin_kk import *
 
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
