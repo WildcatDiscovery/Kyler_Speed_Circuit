@@ -257,11 +257,18 @@ class mpt_data:
 
 
         ### Nyquist Plot
-        for i in range(len(self.df)):
-            ax.plot(self.df[i].re, self.df[i].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', label=self.label_cycleno[i])
-            if fitting == 'on':
-                ax.plot(self.circuit_fit[i].real, -self.circuit_fit[i].imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
-        
+        ax.plot(self.df[0].re, self.df[0].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', label=self.label_cycleno[i])
+        if fitting == 'on':
+            real = []
+            imag = []
+            for i in self.circuit_fit[0]:
+                #print(i.real)
+                real.append(i.real)
+                #print(i.imag)
+                imag.append(-i.imag)
+            ax.plot(real, imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
+
+
     #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
         assert circuit == 'R-RQ-RQ'
@@ -310,6 +317,7 @@ class mpt_data:
             else:
                 print("Circuit Error, check inputs")
                 break
+        print(self.circuit_fit)
 
     def leastsq_errorfunc(self, params, w, re, im, circuit, weight_func):
         re_fit = cir_RsRQRQ_fit(params, w).real
@@ -361,7 +369,7 @@ class mpt_data:
 
         counter = 0
 
-        while self.low_error >= 100000 and counter <= 100:        
+        while self.low_error >= 10000 and counter <= 100:        
             try:
                 counter += 1
                 print('ITERATION NO. : ', counter)
@@ -396,8 +404,8 @@ class mpt_data:
             except KeyboardInterrupt:
                 print('Interrupted!!')
                 #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
-        self.set_new_gph_dims(50,50)
-        self.mpt_plot(fitting = 'on')
+        #self.set_new_gph_dims(50,50)
+        #self.mpt_plot(fitting = 'on')
         self.fitted = pd.DataFrame({'file':self.data,
                     'fit_R':self.fit_Rs,
                 "fit_Rs":self.fit_R,
