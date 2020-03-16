@@ -36,8 +36,8 @@ F = codata.physical_constants['Faraday constant'][0]
 Rg = codata.physical_constants['molar gas constant'][0]
 
 
-from data_extraction import *
-from lin_kk import *
+from utils.script_utils.data_extraction import *
+from utils.script_utils.lin_kk import *
 
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
@@ -402,8 +402,8 @@ class mpt_data:
             except KeyboardInterrupt:
                 print('Interrupted!!')
                 #print([self.fit_Rs[0],self.fit_R[0],self.fit_n[0],self.fit_Q[0],self.fit_R2[0],self.fit_n2[0],self.fit_Q2[0]])
-        self.set_new_gph_dims(50,50)
-        self.mpt_plot(fitting = 'on')
+        #self.set_new_gph_dims(50,50)
+        #self.mpt_plot(fitting = 'on')
         self.fitted = pd.DataFrame({'file':self.data,
                     'fit_R':self.fit_Rs,
                 "fit_Rs":self.fit_R,

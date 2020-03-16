@@ -36,8 +36,8 @@ F = codata.physical_constants['Faraday constant'][0]
 Rg = codata.physical_constants['molar gas constant'][0]
 
 
-from utils.data_extraction import *
-from utils.lin_kk import *
+from data_extraction import *
+from lin_kk import *
 
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
@@ -204,6 +204,7 @@ class mpt_data:
                 self.label_cycleno.append(str(np.round(np.average(self.df[i].E_avg), 2))+' V')
 
         ### Relative Residuals on Fit
+        """
         if rr=='on':
             ax2 = fig.add_subplot(212)
             if fitting == 'off':
@@ -253,7 +254,7 @@ class mpt_data:
     
                 if legend == 'on' or legend == 'potential':
                     ax2.legend(loc='best', fontsize=10, frameon=False)
-
+        """
 
 
         ### Nyquist Plot
@@ -267,6 +268,7 @@ class mpt_data:
                 #print(i.imag)
                 imag.append(-i.imag)
             ax.plot(real, imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
+        plt.show()
 
 
     #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
@@ -317,7 +319,7 @@ class mpt_data:
             else:
                 print("Circuit Error, check inputs")
                 break
-        print(self.circuit_fit)
+        #print(self.circuit_fit)
 
     def leastsq_errorfunc(self, params, w, re, im, circuit, weight_func):
         re_fit = cir_RsRQRQ_fit(params, w).real
@@ -612,3 +614,7 @@ def auto_fit(path, csv_container, lst = None, take_csv = False):
                     continue
                 ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
                 print(i, ' was fittable, but could not obtain a mask')
+
+def path_listing(path):
+    path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
+    return path_files
