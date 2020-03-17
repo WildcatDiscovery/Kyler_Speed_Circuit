@@ -159,7 +159,7 @@ class mpt_data:
         return [max(f['f']), min(f['f'])]
 
     def window_masker(self, x_window, y_window):
-        adj_re = self.df_raw[(self.df_raw['re']<y_window[1]) & (self.df_raw['re']>x_window[0])]
+        adj_re = self.df_raw[(self.df_raw['re']<x_window[1]) & (self.df_raw['re']>x_window[0])]
         adj_mpt = adj_re[(adj_re['im']<y_window[1]) & (adj_re['im']>y_window[0])]
         return [max(adj_mpt['f']), min(adj_mpt['f'])]
     
@@ -203,7 +203,8 @@ class mpt_data:
                 self.label_im_1.append("Z'' ("+str(np.round(np.average(self.df[i].E_avg), 2))+' V)')
                 self.label_cycleno.append(str(np.round(np.average(self.df[i].E_avg), 2))+' V')
 
-        ### Relative Residuals on Fit
+        """ 
+        ###Relative Residuals on Fit
         if rr=='on':
             ax2 = fig.add_subplot(212)
             if fitting == 'off':
@@ -252,9 +253,7 @@ class mpt_data:
                     ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*0.9), color=colors_imag[-1], fontsize=12)
     
                 if legend == 'on' or legend == 'potential':
-                    ax2.legend(loc='best', fontsize=10, frameon=False)
-
-
+                    ax2.legend(loc='best', fontsize=10, frameon=False)"""
 
        ### Nyquist Plot
         ax.plot(self.df[0].re, self.df[0].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', label=self.label_cycleno[i])
@@ -340,7 +339,9 @@ class mpt_data:
         return S
     
     #Updated Guesser
-    def guesser(self, csv_container, to_csv = False):
+    def guesser(self, csv_container = None):
+
+
         Rs_guess = 1e3
         R_guess = 1 
         n_guess = 0.8 
@@ -415,7 +416,7 @@ class mpt_data:
                 "fit_n3":self.fit_n3,
                 "fit_Q3":self.fit_Q3})
         out_name = 'fitted_' + self.data[0][:-4]
-        if to_csv == True:
+        if csv_container:
             self.fitted.to_csv(csv_container+out_name, sep='\t')
             return self.fitted
         return self.fitted
@@ -549,10 +550,9 @@ def the_ringer(path, single_file):
 #if you want to just fit a single mpt or a list of mpts, you can use LST for specific fittings
 #TAKE_CSV for when you want to export a csv
 
-def auto_fit(path, csv_container, lst = None, take_csv = False):
+def auto_fit(path, lst = None, csv_container = None):
 
     bad_mpts = []
-    fitted_files = [f for f in listdir(csv_container) if isfile(join(csv_container, f)) if f[:9] == 'fitted_DE']
     path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
     if not lst:
         for i in path_files:
@@ -560,56 +560,37 @@ def auto_fit(path, csv_container, lst = None, take_csv = False):
                 #print(i, ' was a permissible file')
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name not in fitted_files:
-                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
-                else:
-                    print(i, ' has already been fitted!!')
-                    continue
+                masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                masked_mpt.guesser(csv_container = csv_container)
+            
             except ValueError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
                 bad_mpts.append(i)
                 ex_mpt.mpt_plot()
                 print(i, ' was a bad file, could not find a mask')
             except TypeError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
-                ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                ex_mpt.guesser(csv_container = csv_container)
                 print(i, ' was fittable, but could not obtain a mask')
     for i in lst:
             try:
                 #print(i, ' was a permissible file')
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name not in fitted_files:
-                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
-                else:
-                    print(i, ' has already been fitted!!')
-                    continue
+                masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                masked_mpt.guesser(csv_container = csv_container)
             except ValueError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
                 bad_mpts.append(i)
                 ex_mpt.mpt_plot()
                 print(i, ' was a bad file, could not find a mask')
             except TypeError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
-                ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                ex_mpt.guesser(csv_container = csv_container)
                 print(i, ' was fittable, but could not obtain a mask')
 
 def check_list(path):
