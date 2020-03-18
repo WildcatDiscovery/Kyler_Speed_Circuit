@@ -243,7 +243,7 @@ class mpt_data:
         return [max(f['f']), min(f['f'])]
 
     def window_masker(self, x_window, y_window):
-        adj_re = self.df_raw[(self.df_raw['re']<y_window[1]) & (self.df_raw['re']>x_window[0])]
+        adj_re = self.df_raw[(self.df_raw['re']<x_window[1]) & (self.df_raw['re']>x_window[0])]
         adj_mpt = adj_re[(adj_re['im']<y_window[1]) & (adj_re['im']>y_window[0])]
         return [max(adj_mpt['f']), min(adj_mpt['f'])]
     
