@@ -637,68 +637,55 @@ def the_ringer(path, single_file):
 #if you want to just fit a single mpt or a list of mpts, you can use LST for specific fittings
 #TAKE_CSV for when you want to export a csv
 
-def auto_fit(path, csv_container = None, lst = None):
+def auto_fit(path, entry, csv_container = None):
     bad_mpts = []
-    fitted_files = [f for f in listdir(csv_container) if isfile(join(csv_container, f)) if f[:9] == 'fitted_DE']
-    path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
-    if not lst:
+
+    fitteds = []
+    if type(entry) == list:
+        for i in entry:
+            try:
+                #print(i, ' was a permissible file')
+                ex_mpt = mpt_data(path,[i])
+                out_name = 'fitted_' + ex_mpt.data[0][:-4]
+                masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                fitteds.append(masked_mpt.guesser(csv_container = csv_container))
+            except ValueError:
+                ex_mpt = mpt_data(path,[i])
+                out_name = 'fitted_' + ex_mpt.data[0][:-4]
+                bad_mpts.append(i)
+                ex_mpt.mpt_plot()
+                print(i, ' was a bad file, could not find a mask')
+            except TypeError:
+                ex_mpt = mpt_data(path,[i])
+                out_name = 'fitted_' + ex_mpt.data[0][:-4]
+                ex_mpt.guesser(csv_container = csv_container)
+                print(i, ' was fittable, but could not obtain a mask')
+    
+    if type(entry) == str:
+        path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
         for i in path_files:
             try:
                 #print(i, ' was a permissible file')
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name not in fitted_files:
-                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                    masked_mpt.guesser(csv_container = csv_container)
-                else:
-                    print(i, ' has already been fitted!!')
-                    continue
+                masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                fitteds.append(masked_mpt.guesser(csv_container = csv_container))
             except ValueError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
                 bad_mpts.append(i)
                 ex_mpt.mpt_plot()
                 print(i, ' was a bad file, could not find a mask')
             except TypeError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
                 ex_mpt.guesser(csv_container = csv_container)
                 print(i, ' was fittable, but could not obtain a mask')
-    for i in lst:
-            try:
-                #print(i, ' was a permissible file')
-                ex_mpt = mpt_data(path,[i])
-                out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name not in fitted_files:
-                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                    masked_mpt.guesser(csv_container = csv_container)
-                else:
-                    print(i, ' has already been fitted!!')
-                    continue
-            except ValueError:
-                ex_mpt = mpt_data(path,[i])
-                out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
-                bad_mpts.append(i)
-                ex_mpt.mpt_plot()
-                print(i, ' was a bad file, could not find a mask')
-            except TypeError:
-                ex_mpt = mpt_data(path,[i])
-                out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                if out_name in fitted_files:
-                    print(i, ' has already been fitted!!')
-                    continue
-                ex_mpt.guesser(csv_container = csv_container)
-                print(i, ' was fittable, but could not obtain a mask')
+    
+    to_export = pd.concat(fitteds)
+    return to_export
 
 def path_listing(path):
     path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
-    return path_files
+    for i in path_files:
+        print(i)
