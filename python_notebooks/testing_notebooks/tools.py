@@ -428,7 +428,7 @@ class mpt_data:
         return S
     
     #Updated Guesser
-    def guesser(self, csv_container):
+    def guesser(self, csv_container, to_csv = False):
         Rs_guess = 1e3
         R_guess = 1 
         n_guess = 0.8 
@@ -502,10 +502,10 @@ class mpt_data:
                 "fit_Q2":self.fit_Q2,
                 "fit_n3":self.fit_n3,
                 "fit_Q3":self.fit_Q3})
-        out_name = 'fitted_' + self.data[0][:-4]
-        if csv_container:
+        """out_name = 'fitted_' + self.data[0][:-4]
+        if to_csv == True:
             self.fitted.to_csv(csv_container+out_name, sep='\t')
-            return self.fitted
+            return self.fitted"""
         return self.fitted
 
 

@@ -428,7 +428,7 @@ class mpt_data:
         return S
     
     #Updated Guesser
-    def guesser(self, csv_container, to_csv = False):
+    def guesser(self, csv_container):
         Rs_guess = 1e3
         R_guess = 1 
         n_guess = 0.8 
@@ -502,10 +502,10 @@ class mpt_data:
                 "fit_Q2":self.fit_Q2,
                 "fit_n3":self.fit_n3,
                 "fit_Q3":self.fit_Q3})
-        """out_name = 'fitted_' + self.data[0][:-4]
-        if to_csv == True:
+        out_name = 'fitted_' + self.data[0][:-4]
+        if csv_container:
             self.fitted.to_csv(csv_container+out_name, sep='\t')
-            return self.fitted"""
+            return self.fitted
         return self.fitted
 
 
@@ -637,7 +637,7 @@ def the_ringer(path, single_file):
 #if you want to just fit a single mpt or a list of mpts, you can use LST for specific fittings
 #TAKE_CSV for when you want to export a csv
 
-def auto_fit(path, csv_container, lst = None, take_csv = False):
+def auto_fit(path, csv_container = None, lst = None):
     bad_mpts = []
     fitted_files = [f for f in listdir(csv_container) if isfile(join(csv_container, f)) if f[:9] == 'fitted_DE']
     path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
@@ -649,7 +649,7 @@ def auto_fit(path, csv_container, lst = None, take_csv = False):
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
                 if out_name not in fitted_files:
                     masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                    masked_mpt.guesser(csv_container = csv_container)
                 else:
                     print(i, ' has already been fitted!!')
                     continue
@@ -668,7 +668,7 @@ def auto_fit(path, csv_container, lst = None, take_csv = False):
                 if out_name in fitted_files:
                     print(i, ' has already been fitted!!')
                     continue
-                ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                ex_mpt.guesser(csv_container = csv_container)
                 print(i, ' was fittable, but could not obtain a mask')
     for i in lst:
             try:
@@ -677,7 +677,7 @@ def auto_fit(path, csv_container, lst = None, take_csv = False):
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
                 if out_name not in fitted_files:
                     masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                    masked_mpt.guesser(csv_container = csv_container)
                 else:
                     print(i, ' has already been fitted!!')
                     continue
@@ -696,7 +696,7 @@ def auto_fit(path, csv_container, lst = None, take_csv = False):
                 if out_name in fitted_files:
                     print(i, ' has already been fitted!!')
                     continue
-                ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                ex_mpt.guesser(csv_container = csv_container)
                 print(i, ' was fittable, but could not obtain a mask')
 
 def path_listing(path):
