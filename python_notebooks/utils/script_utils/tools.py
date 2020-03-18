@@ -8,6 +8,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 from scipy.constants import codata
+from pylab import *
 from scipy.optimize import curve_fit
 import mpmath as mp
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit
@@ -35,8 +36,92 @@ F = codata.physical_constants['Faraday constant'][0]
 Rg = codata.physical_constants['molar gas constant'][0]
 
 
-from utils.script_utils.data_extraction import *
-from utils.script_utils.lin_kk import *
+pd.options.mode.chained_assignment = None
+
+#TAKEN FROM PYEIS LIBRARY
+def extract_mpt(path, EIS_name):
+    '''
+    Extracting PEIS and GEIS data files from EC-lab '.mpt' format, coloums are renames following correct_text_EIS()
+    
+    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+    '''
+    EIS_init = pd.read_csv(path+EIS_name, sep='\t', nrows=1,header=0,names=['err'], encoding='latin1') #findes line that states skiplines
+    EIS_test_header_names = pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:-1])-1, encoding='latin1') #locates number of skiplines
+    names_EIS = []
+    for j in range(len(EIS_test_header_names.columns)):
+        names_EIS.append(correct_text_EIS(EIS_test_header_names.columns[j])) #reads coloumn text
+    return pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:-1]), names=names_EIS, encoding='latin1')
+
+#TAKEN FROM PYEIS LIBRARY
+def correct_text_EIS(text_header):
+    '''Corrects the text of '*.mpt' and '*.dta' files into readable parameters without spaces, ., or /
+    
+    <E_we> = averaged Wew value for each frequency
+    <I> = Averaged I values for each frequency
+    |E_we| = module of Ewe
+    |I_we| = module of Iwe
+    Cs/F = Capacitance caluculated using an R+C (series) equivalent circuit
+    Cp/F = Capacitance caluculated using an R-C (parallel) equivalent circuit
+    Ref.:
+        - EC-Lab User's Manual
+    
+    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+    '''
+    if text_header == 'freq/Hz' or text_header == '  Freq(Hz)':
+        return 'f'
+    elif text_header == 'Re(Z)/Ohm' or text_header == "Z'(a)":
+        return 're'
+    elif text_header == '-Im(Z)/Ohm' or text_header == "Z''(b)":
+        return 'im'
+    elif text_header == '|Z|/Ohm':
+        return 'Z_mag'
+    elif text_header == 'Phase(Z)/deg':
+        return 'Z_phase'
+    elif text_header == 'time/s' or text_header == 'Time(Sec)':
+        return 'times'
+    elif text_header == '<Ewe>/V' or text_header == 'Bias':
+        return 'E_avg'
+    elif text_header == '<I>/mA':
+        return 'I_avg'
+    elif text_header == 'Cs/F':
+        return 'Cs' ####
+    elif text_header == 'Cp/F':
+        return 'Cp'
+    elif text_header == 'cycle number':
+        return 'cycle_number'
+    elif text_header == 'Re(Y)/Ohm-1':
+        return 'Y_re'
+    elif text_header == 'Im(Y)/Ohm-1':
+        return 'Y_im'
+    elif text_header == '|Y|/Ohm-1':
+        return 'Y_mag'
+    elif text_header == 'Phase(Y)/deg':
+        return 'Y_phase'
+    elif text_header == 'Time':
+        return 'times'
+    elif text_header == 'Freq':
+        return 'f'
+    elif text_header == 'Zreal':
+        return 're'
+    elif text_header == 'Zimag':
+        return 'im'
+    elif text_header == 'Zmod':
+        return 'Z_mag'
+    elif text_header == 'Vdc':
+        return 'E_avg'
+    elif text_header == 'Idc':
+        return 'I_avg'
+    elif text_header == 'I/mA':
+        return 'ImA'
+    elif text_header == 'Ewe/V':
+        return 'EweV'
+    elif text_header == 'half cycle':
+        return 'half_cycle'
+    elif text_header == 'Ns changes':
+        return 'Ns_changes'
+    else:
+        return text_header
+
 
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
@@ -158,7 +243,7 @@ class mpt_data:
         return [max(f['f']), min(f['f'])]
 
     def window_masker(self, x_window, y_window):
-        adj_re = self.df_raw[(self.df_raw['re']<x_window[1]) & (self.df_raw['re']>x_window[0])]
+        adj_re = self.df_raw[(self.df_raw['re']<y_window[1]) & (self.df_raw['re']>x_window[0])]
         adj_mpt = adj_re[(adj_re['im']<y_window[1]) & (adj_re['im']>y_window[0])]
         return [max(adj_mpt['f']), min(adj_mpt['f'])]
     
@@ -202,8 +287,8 @@ class mpt_data:
                 self.label_im_1.append("Z'' ("+str(np.round(np.average(self.df[i].E_avg), 2))+' V)')
                 self.label_cycleno.append(str(np.round(np.average(self.df[i].E_avg), 2))+' V')
 
-        """ 
-        ###Relative Residuals on Fit
+        ### Relative Residuals on Fit
+        """
         if rr=='on':
             ax2 = fig.add_subplot(212)
             if fitting == 'off':
@@ -252,9 +337,11 @@ class mpt_data:
                     ax2.annotate("$\Delta$-Z''", xy=(np.log10(np.min(self.df[0].f)), np.abs(self.rr_ymax)*100*0.9), color=colors_imag[-1], fontsize=12)
     
                 if legend == 'on' or legend == 'potential':
-                    ax2.legend(loc='best', fontsize=10, frameon=False)"""
+                    ax2.legend(loc='best', fontsize=10, frameon=False)
+        """
 
-       ### Nyquist Plot
+
+        ### Nyquist Plot
         ax.plot(self.df[0].re, self.df[0].im, marker='o', ms=4, lw=2, color=colors[i], ls='-', label=self.label_cycleno[i])
         if fitting == 'on':
             real = []
@@ -265,7 +352,9 @@ class mpt_data:
                 #print(i.imag)
                 imag.append(-i.imag)
             ax.plot(real, imag, lw=0, marker='o', ms=8, mec='r', mew=1, mfc='none', label='')
-        
+        plt.show()
+
+
     #FITTING THE FREQUENCY ONTO THE GRAPH. FLIP SWITCH ON PLOT FUNCT TO DISPLAY
     def mpt_fit(self, params, circuit, weight_func='modulus', nan_policy='raise'):
         assert circuit == 'R-RQ-RQ'
@@ -314,6 +403,7 @@ class mpt_data:
             else:
                 print("Circuit Error, check inputs")
                 break
+        #print(self.circuit_fit)
 
     def leastsq_errorfunc(self, params, w, re, im, circuit, weight_func):
         re_fit = cir_RsRQRQ_fit(params, w).real
@@ -338,9 +428,7 @@ class mpt_data:
         return S
     
     #Updated Guesser
-    def guesser(self, csv_container = None):
-
-
+    def guesser(self, csv_container):
         Rs_guess = 1e3
         R_guess = 1 
         n_guess = 0.8 
@@ -549,9 +637,9 @@ def the_ringer(path, single_file):
 #if you want to just fit a single mpt or a list of mpts, you can use LST for specific fittings
 #TAKE_CSV for when you want to export a csv
 
-def auto_fit(path, lst = None, csv_container = None):
-
+def auto_fit(path, csv_container, lst = None, take_csv = False):
     bad_mpts = []
+    fitted_files = [f for f in listdir(csv_container) if isfile(join(csv_container, f)) if f[:9] == 'fitted_DE']
     path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
     if not lst:
         for i in path_files:
@@ -559,41 +647,58 @@ def auto_fit(path, lst = None, csv_container = None):
                 #print(i, ' was a permissible file')
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                masked_mpt.guesser(csv_container = csv_container)
-            
+                if out_name not in fitted_files:
+                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                else:
+                    print(i, ' has already been fitted!!')
+                    continue
             except ValueError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
+                if out_name in fitted_files:
+                    print(i, ' has already been fitted!!')
+                    continue
                 bad_mpts.append(i)
                 ex_mpt.mpt_plot()
                 print(i, ' was a bad file, could not find a mask')
             except TypeError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                ex_mpt.guesser(csv_container = csv_container)
+                if out_name in fitted_files:
+                    print(i, ' has already been fitted!!')
+                    continue
+                ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
                 print(i, ' was fittable, but could not obtain a mask')
     for i in lst:
             try:
                 #print(i, ' was a permissible file')
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
-                masked_mpt.guesser(csv_container = csv_container)
+                if out_name not in fitted_files:
+                    masked_mpt = mpt_data(path,[i], mask = ex_mpt.masker())
+                    masked_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
+                else:
+                    print(i, ' has already been fitted!!')
+                    continue
             except ValueError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
+                if out_name in fitted_files:
+                    print(i, ' has already been fitted!!')
+                    continue
                 bad_mpts.append(i)
                 ex_mpt.mpt_plot()
                 print(i, ' was a bad file, could not find a mask')
             except TypeError:
                 ex_mpt = mpt_data(path,[i])
                 out_name = 'fitted_' + ex_mpt.data[0][:-4]
-                ex_mpt.guesser(csv_container = csv_container)
+                if out_name in fitted_files:
+                    print(i, ' has already been fitted!!')
+                    continue
+                ex_mpt.guesser(csv_container = csv_container, to_csv = take_csv)
                 print(i, ' was fittable, but could not obtain a mask')
 
-def check_list(path):
+def path_listing(path):
     path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
-    for i in path_files:
-        print(i)
-    #print(path_files) 
+    return path_files

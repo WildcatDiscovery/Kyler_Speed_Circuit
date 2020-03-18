@@ -36,8 +36,92 @@ F = codata.physical_constants['Faraday constant'][0]
 Rg = codata.physical_constants['molar gas constant'][0]
 
 
-from data_extraction import *
-from lin_kk import *
+pd.options.mode.chained_assignment = None
+
+#TAKEN FROM PYEIS LIBRARY
+def extract_mpt(path, EIS_name):
+    '''
+    Extracting PEIS and GEIS data files from EC-lab '.mpt' format, coloums are renames following correct_text_EIS()
+    
+    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+    '''
+    EIS_init = pd.read_csv(path+EIS_name, sep='\t', nrows=1,header=0,names=['err'], encoding='latin1') #findes line that states skiplines
+    EIS_test_header_names = pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:-1])-1, encoding='latin1') #locates number of skiplines
+    names_EIS = []
+    for j in range(len(EIS_test_header_names.columns)):
+        names_EIS.append(correct_text_EIS(EIS_test_header_names.columns[j])) #reads coloumn text
+    return pd.read_csv(path+EIS_name, sep='\t', skiprows=int(EIS_init.err[0][18:-1]), names=names_EIS, encoding='latin1')
+
+#TAKEN FROM PYEIS LIBRARY
+def correct_text_EIS(text_header):
+    '''Corrects the text of '*.mpt' and '*.dta' files into readable parameters without spaces, ., or /
+    
+    <E_we> = averaged Wew value for each frequency
+    <I> = Averaged I values for each frequency
+    |E_we| = module of Ewe
+    |I_we| = module of Iwe
+    Cs/F = Capacitance caluculated using an R+C (series) equivalent circuit
+    Cp/F = Capacitance caluculated using an R-C (parallel) equivalent circuit
+    Ref.:
+        - EC-Lab User's Manual
+    
+    Kristian B. Knudsen (kknu@berkeley.edu || kristianbknudsen@gmail.com)
+    '''
+    if text_header == 'freq/Hz' or text_header == '  Freq(Hz)':
+        return 'f'
+    elif text_header == 'Re(Z)/Ohm' or text_header == "Z'(a)":
+        return 're'
+    elif text_header == '-Im(Z)/Ohm' or text_header == "Z''(b)":
+        return 'im'
+    elif text_header == '|Z|/Ohm':
+        return 'Z_mag'
+    elif text_header == 'Phase(Z)/deg':
+        return 'Z_phase'
+    elif text_header == 'time/s' or text_header == 'Time(Sec)':
+        return 'times'
+    elif text_header == '<Ewe>/V' or text_header == 'Bias':
+        return 'E_avg'
+    elif text_header == '<I>/mA':
+        return 'I_avg'
+    elif text_header == 'Cs/F':
+        return 'Cs' ####
+    elif text_header == 'Cp/F':
+        return 'Cp'
+    elif text_header == 'cycle number':
+        return 'cycle_number'
+    elif text_header == 'Re(Y)/Ohm-1':
+        return 'Y_re'
+    elif text_header == 'Im(Y)/Ohm-1':
+        return 'Y_im'
+    elif text_header == '|Y|/Ohm-1':
+        return 'Y_mag'
+    elif text_header == 'Phase(Y)/deg':
+        return 'Y_phase'
+    elif text_header == 'Time':
+        return 'times'
+    elif text_header == 'Freq':
+        return 'f'
+    elif text_header == 'Zreal':
+        return 're'
+    elif text_header == 'Zimag':
+        return 'im'
+    elif text_header == 'Zmod':
+        return 'Z_mag'
+    elif text_header == 'Vdc':
+        return 'E_avg'
+    elif text_header == 'Idc':
+        return 'I_avg'
+    elif text_header == 'I/mA':
+        return 'ImA'
+    elif text_header == 'Ewe/V':
+        return 'EweV'
+    elif text_header == 'half cycle':
+        return 'half_cycle'
+    elif text_header == 'Ns changes':
+        return 'Ns_changes'
+    else:
+        return text_header
+
 
 class mpt_data:
     def __init__(self, path, data, cycle='off', mask=['none','none'], gph_width = 6.4, gph_height = 4.8):
@@ -418,10 +502,10 @@ class mpt_data:
                 "fit_Q2":self.fit_Q2,
                 "fit_n3":self.fit_n3,
                 "fit_Q3":self.fit_Q3})
-        out_name = 'fitted_' + self.data[0][:-4]
+        """out_name = 'fitted_' + self.data[0][:-4]
         if to_csv == True:
             self.fitted.to_csv(csv_container+out_name, sep='\t')
-            return self.fitted
+            return self.fitted"""
         return self.fitted
 
 
