@@ -507,7 +507,17 @@ class mpt_data:
             self.fitted.to_csv(csv_container+out_name, sep='\t')
             return self.fitted
         return self.fitted
-
+    
+    
+    #Guess and Plot; who knows if i'll use it
+    def guess_and_plot(self, csv_container = None, mask = None):
+        if mask:
+            masked_mpt = mpt_data(self.path, self.data, mask = mask)
+            masked_mpt.guesser()
+            masked_mpt.mpt_plot(fitting = 'on')
+        else:
+            self.guesser()
+            self.mpt_plot(fitting = 'on')
 
 def cir_RsRQRQ_fit(params, w):
     '''
@@ -686,6 +696,6 @@ def auto_fit(path, entry, csv_container = None):
     return to_export
 
 def path_listing(path):
-    path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == 'mpt']
+    path_files = [f for f in listdir(path) if isfile(join(path, f)) if f[-3:] == "mpt"]
     for i in path_files:
         print(i)
