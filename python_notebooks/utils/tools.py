@@ -428,7 +428,7 @@ class mpt_data:
         return S
     
     #Updated Guesser
-    def guesser(self, csv_container):
+    def guesser(self, csv_container = None):
         Rs_guess = 1e3
         R_guess = 1 
         n_guess = 0.8 
