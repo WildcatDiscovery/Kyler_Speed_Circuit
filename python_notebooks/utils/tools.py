@@ -4,6 +4,7 @@
 
 #IMPORT NESSECARY LIBRARIES
 #Python dependencies
+
 from __future__ import division
 import pandas as pd
 import numpy as np
@@ -37,6 +38,13 @@ Rg = codata.physical_constants['molar gas constant'][0]
 
 
 pd.options.mode.chained_assignment = None
+
+
+#USE THIS FOR COMMAND LINE TESTING
+#>python3 -c "from tools import *; 
+# print(mpt_data(path = r'C:\Users\cjang\Desktop\Kyler_Speed_Circuit\data\\', data = ['DE_3.mpt']).funct or attribute)"
+
+
 
 #TAKEN FROM PYEIS LIBRARY
 def extract_mpt(path, EIS_name):

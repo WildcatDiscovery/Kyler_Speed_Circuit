@@ -47,7 +47,7 @@ def masker(self, num_bins = 5):
     return [max(f['f']), min(f['f'])]
 
 ex_mpt = mpt_data(path, [data])
-ex_mpt.mpt_plot()
+#ex_mpt.mpt_plot()
 
 if mask_choice == str(1):
     masker = ex_mpt.fast_mask()
