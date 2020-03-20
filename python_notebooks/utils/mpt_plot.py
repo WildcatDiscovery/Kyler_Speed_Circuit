@@ -8,7 +8,7 @@ data = sys.argv[2]
 
 ex_mpt = mpt_data(path, [data])
 
-if len(sys.argv) == 2:
+if len(sys.argv) == 3:
     ex_mpt.mpt_plot()
 elif len(sys.argv) > 3:
     if 'fit' in sys.argv:
