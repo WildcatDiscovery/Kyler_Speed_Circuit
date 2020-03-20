@@ -18,6 +18,8 @@ pd.options.mode.chained_assignment = None
 import statistics as stat
 from os import listdir
 from os.path import isfile, join
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 
 
 #Plotting
