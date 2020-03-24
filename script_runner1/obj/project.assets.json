@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\CJang\\Desktop\\script_runner1\\script_runner1.csproj",
+      "projectUniqueName": "C:\\Users\\CJang\\Desktop\\Kyler_Speed_Circuit\\script_runner1\\script_runner1.csproj",
       "projectName": "script_runner1",
-      "projectPath": "C:\\Users\\CJang\\Desktop\\script_runner1\\script_runner1.csproj",
+      "projectPath": "C:\\Users\\CJang\\Desktop\\Kyler_Speed_Circuit\\script_runner1\\script_runner1.csproj",
       "packagesPath": "C:\\Users\\CJang\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\CJang\\Desktop\\script_runner1\\obj\\",
+      "outputPath": "C:\\Users\\CJang\\Desktop\\Kyler_Speed_Circuit\\script_runner1\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\CJang\\AppData\\Roaming\\NuGet\\NuGet.Config",

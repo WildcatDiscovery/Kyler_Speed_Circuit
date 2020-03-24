@@ -129,8 +129,16 @@ namespace script_runner1
 
             //foreach (string s in output)
             //Console.WriteLine(s);
+
             string output1 = string.Join(", ", output);
-            return output1;
+            if (output1.Length > 0)
+            {
+                return output1;
+            }
+            else
+            {
+                return ("Empty folder or a bad directory");
+            }
         }
 
 
@@ -182,38 +190,50 @@ namespace script_runner1
             Console.WriteLine(path_listing(path));
 
 
-
-            Console.WriteLine("Pick a datafile from the file above: ");
-            try
+            if (path_listing(path).Length > 0)
             {
-                data = (Console.ReadLine());
+                Console.WriteLine("Pick a datafile from the file above: ");
+                try
+                {
+                    data = (Console.ReadLine());
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Not a String; Pick again");
+                    data = (Console.ReadLine());
+                }
+
+                Console.WriteLine(guesser(path, data));
+
+
+                Console.WriteLine("Now pick a mask: ");
+                Console.WriteLine("1: Fast Mask");
+                Console.WriteLine("2: Binning Mask");
+                Console.WriteLine("3: Combo Mask");
+
+                try
+                {
+                    z = (Console.ReadLine());
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Not applicable");
+                    z = (Console.ReadLine());
+                }
+
+                Console.WriteLine(masker(path, data, z));
+
+
             }
-            catch (Exception e)
+            else
             {
-                Console.WriteLine("Not a String; Pick again");
-                data = (Console.ReadLine());
+                Console.WriteLine("Bad path");
             }
-
-            Console.WriteLine(guesser(path, data));
-
+            
 
 
-            Console.WriteLine("Now pick a mask: ");
-            Console.WriteLine("1: Fast Mask");
-            Console.WriteLine("2: Binning Mask");
-            Console.WriteLine("3: Combo Mask");
 
-            try
-            {
-              z = (Console.ReadLine());
-            }
-            catch (Exception e)
-            {
-              Console.WriteLine("Not applicable");
-             z = (Console.ReadLine());
-            }
-
-            Console.WriteLine(masker(path, data, z));
+            
 
             //Console.WriteLine("Pick X Limits: ");
             //try

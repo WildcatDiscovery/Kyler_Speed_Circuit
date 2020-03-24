@@ -9,3 +9,14 @@ C:\Users\CJang\Desktop\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.Ass
 C:\Users\CJang\Desktop\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.AssemblyInfo.cs
 C:\Users\CJang\Desktop\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.dll
 C:\Users\CJang\Desktop\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.pdb
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.csprojAssemblyReference.cache
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.AssemblyInfoInputs.cache
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.AssemblyInfo.cs
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.dll
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.pdb
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.exe
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.deps.json
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.runtimeconfig.json
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.runtimeconfig.dev.json
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.dll
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.pdb
