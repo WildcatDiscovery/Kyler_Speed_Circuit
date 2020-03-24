@@ -190,7 +190,7 @@ namespace script_runner1
             Console.WriteLine(path_listing(path));
 
 
-            if (path_listing(path).Length > 0)
+            if (path_listing(path) != "Empty folder or a bad directory")
             {
                 Console.WriteLine("Pick a datafile from the file above: ");
                 try
