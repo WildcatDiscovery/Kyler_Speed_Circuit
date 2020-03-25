@@ -20,3 +20,5 @@ C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.
 C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.runtimeconfig.dev.json
 C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.dll
 C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\bin\Debug\netcoreapp3.1\script_runner1.pdb
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.csproj.CoreCompileInputs.cache
+C:\Users\CJang\Desktop\Kyler_Speed_Circuit\script_runner1\obj\Debug\netcoreapp3.1\script_runner1.genruntimeconfig.cache
