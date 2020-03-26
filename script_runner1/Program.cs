@@ -57,7 +57,6 @@ namespace script_runner1
             string output1 = string.Join(", ", output);
             return output1;
         }
-
         static string masker(string path, string mpt_file, string mask_choice)
         {
             string progToRun = "C:/Users/CJang/Desktop/Kyler_Speed_Circuit/python_notebooks/utils/masker.py";
@@ -140,8 +139,6 @@ namespace script_runner1
                 return ("Empty folder or a bad directory");
             }
         }
-
-
         static string mpt_dataframe(string path, string mpt_file)
         {
             Process proc = new Process();

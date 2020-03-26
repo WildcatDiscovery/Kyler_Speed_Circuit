@@ -5,8 +5,12 @@ import pandas as pd
 
 path = sys.argv[1]
 data = sys.argv[2]
+
+data_edit = data.strip('\n')
+sys.argv[2] = "/" + data_edit
+
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 
-
-print(mpt_data(path, [data]).df)
+#print(sys.argv)
+print(mpt_data(path, [sys.argv[2]]).df_raw[['f', 're', 'im']])
