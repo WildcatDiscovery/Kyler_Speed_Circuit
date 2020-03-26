@@ -1,24 +1,34 @@
 from tools import *
-import sys
 import pandas as pd
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-#Script to plot the data of mpt
+import numpy as np
+import statistics as stat
+import sys
+#Script to display the dataframe of a single mpt file
 
 path = sys.argv[1]
 data = sys.argv[2]
-
 data_edit = data.strip('\n')
 sys.argv[2] = "/" + data_edit
+mask_choice = sys.argv[3]
+data = sys.argv[2]
 
 
-ex_mpt = mpt_data(path, [sys.argv[2]])
+print(sys.argv)
 
-if len(sys.argv) > 3:
-    if len(sys.argv) > 4:
-        masked_mpt = mpt_data(path, [sys.argv[2]], mask = sys.argv[4])
-        print(masked_mpt.guesser())
-    else:
-        print(ex_mpt.guesser(sys.argv[3]))
+ex_mpt = mpt_data(path, [data])
+#ex_mpt.mpt_plot()
+
+if mask_choice == str(1):
+    masker = ex_mpt.fast_mask()
+    masked_mpt = mpt_data(path, [data], mask = masker)
+    print(masked_mpt.guesser())
+elif mask_choice == str(2):
+    masker = ex_mpt.masker0()
+    masked_mpt = mpt_data(path, [data], mask = masker)
+    print(masked_mpt.guesser())
+elif mask_choice == str(3):
+    masker = ex_mpt.masker()
+    masked_mpt = mpt_data(path, [data], mask = masker)
+    print(masked_mpt.guesser())
 else:
-    print(ex_mpt.guesser())
+    print("Error, not a Masking Function")

@@ -19,12 +19,15 @@ ex_mpt = mpt_data(path, [data])
 
 if mask_choice == str(1):
     masker = ex_mpt.fast_mask()
+    #masked_mpt = mpt_data(path, [data], masker)
     print(ex_mpt.fast_mask())
 elif mask_choice == str(2):
     masker = ex_mpt.masker0()
+    #masked_mpt = mpt_data(path, [data], masker)
     print(ex_mpt.masker0())
 elif mask_choice == str(3):
     masker = ex_mpt.masker()
+    #masked_mpt = mpt_data(path, [data], masker)
     print(ex_mpt.masker())
 else:
     print("Error, not a Masking Function")
