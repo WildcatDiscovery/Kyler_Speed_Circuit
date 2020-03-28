@@ -386,7 +386,7 @@ class mpt_data:
 
         for i in range(len(self.df)):
             self.Fit.append(minimize(self.leastsq_errorfunc, params, method='leastsq', args=(self.df[i].w.values, self.df[i].re.values, self.df[i].im.values, circuit, weight_func), nan_policy=nan_policy, maxfev=9999990))
-            print(report_fit(self.Fit[i]))
+            #print(report_fit(self.Fit[i]))
             #print(self.Fit)
             #self.fit_E.append(np.average(self.df[i].E_avg))
         
@@ -418,7 +418,7 @@ class mpt_data:
         re_fit = cir_RsRQRQ_fit(params, w).real
         im_fit = -cir_RsRQRQ_fit(params, w).imag
         error = [(re-re_fit)**2, (im-im_fit)**2] #sum of squares
-        print('MPT FILE : ', self.data[0], ' ERROR: ', sum(error))
+        #print('MPT FILE : ', self.data[0], ' ERROR: ', sum(error))
         self.low_error = sum(error)
         #Different Weighing options, see Lasia
         if weight_func == 'modulus':
@@ -467,7 +467,7 @@ class mpt_data:
         while self.low_error >= 10000 and counter <= 100:        
             try:
                 counter += 1
-                print('ITERATION NO. : ', counter)
+                #print('ITERATION NO. : ', counter)
                 Rs_guess = self.fit_Rs[0]
 
                 R_guess = self.fit_R[0]
