@@ -7,6 +7,9 @@ import sys
 
 path = sys.argv[1]
 data = sys.argv[2]
+data_edit = data.strip('\n')
+sys.argv[2] = "/" + data_edit
+data = sys.argv[2]
 
 x_min = int(sys.argv[3])
 x_max = int(sys.argv[4])
@@ -25,4 +28,4 @@ def window_masker(self, x_window, y_window):
 
 ex_mpt = mpt_data(path, [data])
 print(window_masker(ex_mpt, x_window = [x_min, x_max], y_window = [y_min, y_max]))
-ex_mpt.mpt_plot(x_window = [x_min, x_max], y_window = [y_min, y_max])
+#ex_mpt.mpt_plot(x_window = [x_min, x_max], y_window = [y_min, y_max])
