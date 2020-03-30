@@ -12,7 +12,8 @@ sys.argv[2] = "/" + data_edit
 mask_choice = sys.argv[3]
 data = sys.argv[2]
 
-
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
 #print(sys.argv)
 
 ex_mpt = mpt_data(path, [data])
@@ -27,5 +28,5 @@ elif mask_choice == str(3):
 else:
     print("Error, not a Masking Function")
 masked_mpt = mpt_data(path, [data], mask = masker)
-masked_mpt.mpt_plot()
+#masked_mpt.mpt_plot()
 print(masked_mpt.df_raw[['f', 're', 'im']])
