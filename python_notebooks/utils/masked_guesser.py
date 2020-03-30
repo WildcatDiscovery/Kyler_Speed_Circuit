@@ -22,13 +22,19 @@ if mask_choice == str(1):
     masker = ex_mpt.fast_mask()
     masked_mpt = mpt_data(path, [data], mask = masker)
     print(masked_mpt.guesser())
+    for i in masked_mpt.circuit_fit[0]:
+            print(i.real, ", ", -i.imag)
 elif mask_choice == str(2):
     masker = ex_mpt.masker0()
     masked_mpt = mpt_data(path, [data], mask = masker)
     print(masked_mpt.guesser())
+    for i in masked_mpt.circuit_fit[0]:
+            print(i.real, ", ", -i.imag)
 elif mask_choice == str(3):
     masker = ex_mpt.masker()
     masked_mpt = mpt_data(path, [data], mask = masker)
     print(masked_mpt.guesser())
+    for i in masked_mpt.circuit_fit[0]:
+            print(i.real, ", ", -i.imag)
 else:
     print("Error, not a Masking Function")
