@@ -9,7 +9,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 from scipy.constants import codata
-from pylab import *
+#from pylab import *
 from scipy.optimize import curve_fit
 import mpmath as mp
 from lmfit import minimize, Minimizer, Parameters, Parameter, report_fit

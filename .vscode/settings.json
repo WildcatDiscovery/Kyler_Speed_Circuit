@@ -1,2 +1,4 @@
-{"python.pythonPath": "C:\\Users\\CJang\\AppData\\Local\\Continuum\\anaconda3\\python.exe"
+{
+    "python.pythonPath": "env\\Scripts\\python.exe",
+    "git.ignoreLimitWarning": true
 }
