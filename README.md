@@ -18,3 +18,6 @@ Currently, we are using a different version of the fitter, we moved over to a C#
 Python notebooks should still be functioning and guiding. 
 New Scripts have been written for the C# Application to use, as we wrapped the python code in a C# document to call the terminal.
 
+Assuming you have pip installed, you can install all of the dependencies that the python library requires by running 
+pip install -r requirements.txt
+in your command line. I would advise doing this in a virtual environment, but that is up to the user.
